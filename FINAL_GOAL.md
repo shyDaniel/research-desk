@@ -208,17 +208,57 @@ NOT acceptable: "What is the paper about?", "Summarize the abstract".
 
 ### 5. Aesthetic
 
-- Dark editorial theme. Near-black warm-toned background (`#0f0e0c`-ish),
-  cream text (`#f1ece0`-ish), one sharp accent (deep red OR amber — not both).
-- Serif display font (Fraunces or Newsreader) for headings.
-- Clean sans (Geist / Plus Jakarta / IBM Plex Sans) for body.
-- Mono (JetBrains Mono / Geist Mono) for identifiers, code, keyboard shortcuts.
-- Subtle grain/noise texture on background surfaces (SVG or CSS, not a PNG).
-- No purple, no generic "chatbot dark mode". No emoji in UI chrome.
-- Animations minimal and purposeful — card flips, progress bar fills. No
-  parallax, no gratuitous fades.
-- Responsive: works at 375px width (iPhone SE) and at 1440px desktop.
-  Sidebar collapses to a bottom-nav on mobile.
+The design language is **大气** (dà qì) — spacious, dignified, unhurried.
+Inspired by two sources the user lives in daily:
+
+1. **Claude's own palette**: warm off-white backgrounds, generous whitespace,
+   the characteristic coral-orange accent (`#D97757`-ish), soft warm grays for
+   secondary surfaces.
+2. **Solarized Light** (his VSCode theme): base `#FDF6E3` (base3 cream),
+   `#EEE8D5` (base2 parchment), `#657B83` (base00 slate text),
+   `#586E75` (base01 secondary text), with Solarized accent colors for
+   semantic highlights (`#268BD2` blue, `#2AA198` cyan, `#859900` green,
+   `#CB4B16` orange, `#DC322F` red).
+
+Unified palette rules:
+- **Background**: `#FDF6E3` (Solarized base3 / Claude cream). Not pure white.
+- **Surface (cards, panels)**: `#EEE8D5` (Solarized base2).
+- **Primary text**: `#586E75` (Solarized base01 — dark slate, not black).
+- **Secondary text**: `#657B83` (Solarized base00).
+- **Accent**: `#D97757` (Claude coral-orange). Used for CTAs, active states,
+  progress fills, flashcard flip button. Do NOT use blue or green as primary
+  accent.
+- **Code/mono highlight**: `#268BD2` (Solarized blue) for inline identifiers.
+- **Success / done states**: `#859900` (Solarized green).
+- **Borders / dividers**: `#EEE8D5` to `#D4CEBD` — never harsh black lines.
+
+Typography:
+- **Display headings** (H1/H2): Fraunces or Newsreader (serif) — sets the
+  "academic research" tone.
+- **Body / UI text**: Plus Jakarta Sans or IBM Plex Sans — clean, warm,
+  not clinical.
+- **Monospace** (identifiers, shortcuts, code snippets): JetBrains Mono or
+  Geist Mono, in the Solarized blue `#268BD2`.
+
+Spacing & layout:
+- Generous padding. Cards have at least 24px internal padding. Nothing cramped.
+- Sidebar is 240–260px wide on desktop, fixed. Main content gets the rest.
+- Section titles use uppercase letter-spacing (tracking-widest) at 11–12px
+  for wayfinding labels — a Solarized-UI convention.
+- Line height 1.6–1.75 for body text. Reader-friendly, not squeezed.
+
+Do NOT:
+- Use dark mode (user lives in Solarized Light all day — match it).
+- Use purple, neon, or generic dark-mode aesthetics.
+- Use pure white (`#FFFFFF`) backgrounds — always the warm cream.
+- Use emoji in navigation or UI chrome.
+- Add gratuitous animations. Card flips and progress fills are the only
+  motion. No parallax, no entrance animations.
+
+Responsive:
+- Works at 375px (iPhone SE) and 1440px desktop.
+- Sidebar collapses to a bottom-nav on mobile (4 icons max).
+- On mobile, cards go full-width; serif headings scale down gracefully.
 
 ### 6. Accessibility
 
