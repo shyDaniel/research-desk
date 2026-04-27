@@ -40,8 +40,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f0e0c",
-  colorScheme: "dark",
+  // Solarized Light cream — the honest color of the app shell.
+  themeColor: "#FDF6E3",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
 };
@@ -54,7 +55,7 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${geistSans.variable} ${geistMono.variable}`}
     >
-      <body className="min-h-screen bg-ink-950 text-bone-200 antialiased">
+      <body className="min-h-screen bg-solar-50 text-solar-700 antialiased">
         {children}
       </body>
     </html>

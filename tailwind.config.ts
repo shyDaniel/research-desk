@@ -1,5 +1,11 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Research Desk — Solarized Light + Claude coral palette.
+ * FINAL_GOAL.md §5 mandates a light, warm, dignified aesthetic. Dark mode is
+ * explicitly forbidden; pure white is forbidden. All tokens below encode that
+ * constraint as design primitives.
+ */
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
@@ -9,51 +15,94 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Dark editorial palette — warm near-black + cream + amber accent.
-        ink: {
-          // Background layers, darkest → lighter surfaces.
-          950: "#0f0e0c",
-          900: "#151311",
-          800: "#1c1a17",
-          700: "#26231f",
-          600: "#34302a",
-          500: "#4a453d",
+        // Solarized Light neutrals — cream paper → parchment → deep slate text.
+        // Numbered so lighter = lower number, matching Tailwind's convention,
+        // but the overall scale stays in the warm "aged paper" register.
+        solar: {
+          // base3 — the canonical Solarized Light page background.
+          50: "#FDF6E3",
+          // base2 — raised surface (cards, side-sheets, panels).
+          100: "#EEE8D5",
+          // A slightly cooler divider between base2 and text.
+          200: "#E4DDC8",
+          // The quieter edge of the divider ramp.
+          300: "#D4CEBD",
+          // base1 — disabled / faint text.
+          400: "#93A1A1",
+          // base0 — secondary icons.
+          500: "#839496",
+          // base00 — secondary body text.
+          600: "#657B83",
+          // base01 — primary body text (the de-facto "foreground").
+          700: "#586E75",
+          // base02 — deep contrast for rare heavy headings.
+          800: "#073642",
+          // base03 — only used for sparing, high-drama emphasis.
+          900: "#002B36",
         },
-        bone: {
-          // Text / cream foreground.
-          50: "#faf7f0",
-          100: "#f4efe4",
-          200: "#f1ece0",
-          300: "#d9d2c2",
-          400: "#b4ad9d",
-          500: "#8a8578",
-          600: "#5f5b52",
+        // Claude coral — single sharp accent. CTAs, active tab, progress fill,
+        // flashcard flip, due-count badge. Explicitly NOT blue or green.
+        coral: {
+          50: "#FBEDE5",
+          100: "#F4D3C1",
+          200: "#ECB79A",
+          300: "#E49974",
+          400: "#DE8560",
+          // The canonical Claude coral-orange.
+          500: "#D97757",
+          600: "#C1603F",
+          700: "#9B4B32",
+          800: "#743826",
         },
-        // Single sharp accent — amber (warm, editorial, not purple).
-        amber: {
-          400: "#f1b24a",
-          500: "#e59a25",
-          600: "#c77e10",
-        },
-        // A deep quiet red is available for destructive/due states.
-        rust: {
-          500: "#b8442c",
-          600: "#973520",
+        // Solarized semantic accents. Blue is reserved for inline code
+        // identifiers; green is the success / done state.
+        sol: {
+          yellow: "#B58900",
+          orange: "#CB4B16",
+          red: "#DC322F",
+          magenta: "#D33682",
+          violet: "#6C71C4",
+          blue: "#268BD2",
+          cyan: "#2AA198",
+          green: "#859900",
         },
       },
       fontFamily: {
-        serif: ["var(--font-fraunces)", "Fraunces", "Newsreader", "ui-serif", "Georgia", "serif"],
-        sans: ["var(--font-geist-sans)", "Geist", "ui-sans-serif", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "Geist Mono", "JetBrains Mono", "ui-monospace", "monospace"],
+        serif: [
+          "var(--font-fraunces)",
+          "Fraunces",
+          "Newsreader",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
+        sans: [
+          "var(--font-geist-sans)",
+          "Geist",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        mono: [
+          "var(--font-geist-mono)",
+          "Geist Mono",
+          "JetBrains Mono",
+          "ui-monospace",
+          "monospace",
+        ],
       },
       letterSpacing: {
         tightest: "-0.03em",
       },
       borderColor: {
-        DEFAULT: "#26231f",
+        // Default hairline is the parchment divider, never black.
+        DEFAULT: "#E4DDC8",
       },
       boxShadow: {
-        "inset-hairline": "inset 0 0 0 1px rgba(241, 236, 224, 0.06)",
+        // A quiet inset hairline that reads on cream without darkening it.
+        "inset-hairline": "inset 0 0 0 1px rgba(88, 110, 117, 0.08)",
+        // A soft lift for Dashboard cards — warm, not blue-gray.
+        card: "0 1px 0 rgba(88, 110, 117, 0.04), 0 4px 16px -8px rgba(88, 110, 117, 0.10)",
       },
     },
   },

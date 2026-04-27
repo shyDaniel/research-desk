@@ -61,10 +61,14 @@ Flashcards and papers follow the same pattern. Tests in
 
 ## Theme & aesthetic tokens
 
-Design tokens live in `tailwind.config.ts` (`ink-*`, `bone-*`, `amber-*`,
-`rust-*`) and in CSS custom properties in `app/globals.css` (`--bg`,
-`--fg`, `--accent`, etc.). Fonts are loaded via `next/font/google`
-(Fraunces, Geist, Geist Mono) and exposed as CSS variables.
+Design tokens live in `tailwind.config.ts` (`solar-*` for the Solarized
+Light neutral ramp, `coral-*` for the Claude coral accent, and `sol.*` for
+the named Solarized semantic accents blue / green / orange / etc.) and in
+CSS custom properties in `app/globals.css` (`--bg` = `#FDF6E3`, `--fg` =
+`#586E75`, `--accent` = `#D97757`, etc.). Fonts are loaded via
+`next/font/google` (Fraunces, Geist, Geist Mono) and exposed as CSS
+variables. Dark mode is not supported and is explicitly forbidden by
+FINAL_GOAL.md §5.
 
 ## MCPs
 
