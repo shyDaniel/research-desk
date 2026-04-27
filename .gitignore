@@ -1,0 +1,34 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# next
+.next/
+out/
+next-env.d.ts
+
+# misc
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# editors
+.vscode/
+.idea/
+
+# test / coverage
+coverage/
+
+# autopilot working files
+autopilot.out
+.autopilot/
+
+# tsc incremental cache
+tsconfig.tsbuildinfo
+
+# playwright MCP session artifacts
+.playwright-mcp/
+page-*.yml
+console-*.log
+bootstrap-landing*.png

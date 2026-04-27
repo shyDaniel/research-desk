@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+ * Research Desk — dark editorial base theme.
+ * Warm near-black background (#0f0e0c), cream text (#f1ece0), amber accent.
+ * Subtle CSS grain rendered as an SVG data URI on the body surface.
+ * ------------------------------------------------------------------------ */
+
+:root {
+  --bg: #0f0e0c;
+  --bg-raised: #151311;
+  --bg-sunken: #0b0a09;
+  --fg: #f1ece0;
+  --fg-muted: #b4ad9d;
+  --fg-faint: #8a8578;
+  --border: #26231f;
+  --border-strong: #34302a;
+  --accent: #e59a25;
+  --accent-soft: rgba(229, 154, 37, 0.18);
+  --accent-ring: rgba(229, 154, 37, 0.45);
+  --due: #b8442c;
+}
+
+html,
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-feature-settings: "ss01", "ss02", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-geist-sans), Geist, ui-sans-serif, system-ui, sans-serif;
+  /* Grain — a tiny SVG turbulence tile, tiled over the background. Kept at
+   * low opacity so it only reads as texture, never as noise. */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.92  0 0 0 0 0.87  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-repeat: repeat;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-fraunces), Fraunces, Newsreader, ui-serif, Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+code,
+kbd,
+pre,
+.mono {
+  font-family: var(--font-geist-mono), "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Visible focus rings — never outline:none. Amber ring on dark surfaces. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Selection color tuned to the amber accent, warm against cream. */
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+/* Thin editorial hairline utility. */
+.hairline {
+  border-color: var(--border);
+}
+
+.hairline-strong {
+  border-color: var(--border-strong);
+}
+
+/* Reduce-motion respect: kill non-essential transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
