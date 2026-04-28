@@ -215,10 +215,10 @@ export default function FlashcardsPage() {
         </p>
         <div className="mt-4">
           <Link
-            href="/dashboard"
+            href="/curriculum"
             className="mono text-[11px] uppercase tracking-[0.22em] text-coral-600 hover:text-coral-700"
           >
-            ← Back to dashboard
+            ← Back to curriculum
           </Link>
         </div>
       </aside>
@@ -576,10 +576,10 @@ function EmptyState({
       ) : null}
       <div className="mt-8 flex justify-center gap-3">
         <Link
-          href="/dashboard"
+          href="/curriculum"
           className="rounded-sm border border-coral-500 bg-coral-500 px-5 py-2 font-serif text-sm text-solar-50 hover:bg-coral-600"
         >
-          Back to dashboard
+          Back to curriculum
         </Link>
         <button
           type="button"

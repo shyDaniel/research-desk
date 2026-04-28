@@ -8,53 +8,18 @@
 // paint), exposes cycle/set helpers, and writes through to storage on
 // every change. Writes go through the `writeEnvelope` helper which already
 // handles quota / private-mode errors.
-//
-// Side-effect: every cycle also updates the weekly-streak envelope
-// (research-desk:v1:streak) via src/lib/streak. Landing on `done` adds
-// today to the streak's qualifying-day set; every cycle refreshes the
-// `lastTouched` pointer that the Dashboard's Continue card reads.
 
 import { useCallback, useEffect, useState } from "react";
 
 import {
   cycleProgress as cycleReducer,
-  nextState as nextProgressState,
   setProgress as setReducer,
   type ProgressMap,
   type ProgressState,
 } from "@/lib/progress";
 import { STORAGE_KEYS, readEnvelope, writeEnvelope } from "@/lib/storage";
-import {
-  EMPTY_STREAK,
-  recordProgressDone,
-  recordProgressTouch,
-  type StreakState,
-} from "@/lib/streak";
 
 const KEY = STORAGE_KEYS.progress;
-const STREAK_KEY = STORAGE_KEYS.streak;
-const STREAK_EVENT = "research-desk:streak-change";
-
-/**
- * Update the streak envelope in response to a progress change.
- * Kept outside React state so the side-effect fires exactly once per user
- * gesture regardless of how many times `setState` is called.
- */
-function recordStreak(itemId: string, state: ProgressState) {
-  if (typeof window === "undefined") return;
-  const now = Date.now();
-  const prev = readEnvelope<StreakState>(STREAK_KEY, EMPTY_STREAK);
-  const next =
-    state === "done"
-      ? recordProgressDone(prev, now, itemId)
-      : recordProgressTouch(prev, now, itemId);
-  writeEnvelope(STREAK_KEY, next);
-  try {
-    window.dispatchEvent(new Event(STREAK_EVENT));
-  } catch {
-    // ignore
-  }
-}
 
 interface UseProgressResult {
   /** Map of itemId → state. Items not in the map are pending. */
@@ -84,11 +49,6 @@ export function useProgress(): UseProgressResult {
     setProgressState((prev) => {
       const next = cycleReducer(prev, itemId);
       writeEnvelope(KEY, next);
-      // `cycleReducer` deletes the entry when it wraps to pending, so read
-      // the post-cycle state by re-computing from the source of truth.
-      const current = prev[itemId] ?? "pending";
-      const landed = nextProgressState(current);
-      recordStreak(itemId, landed);
       return next;
     });
   }, []);
@@ -97,7 +57,6 @@ export function useProgress(): UseProgressResult {
     setProgressState((prev) => {
       const next = setReducer(prev, itemId, state);
       writeEnvelope(KEY, next);
-      recordStreak(itemId, state);
       return next;
     });
   }, []);

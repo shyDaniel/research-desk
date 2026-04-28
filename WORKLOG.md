@@ -656,3 +656,54 @@ papers index 174 B / 109 kB, papers/[slug] 3.27 kB / 112 kB, 11 static
 paper pages prerendered). `cat lighthouse.json | node -e "for(const k
 of ['performance','accessibility','best-practices','seo'])if(l.categories[k].score<0.95)exit(1)"`
 exits 0 against the committed report.
+
+## 2026-04-28 · S-136 · Delete Dashboard; curriculum becomes home
+
+Executed the "radical simplification" mandate (commit 4788b69). Deleted
+the `/dashboard` route group (`app/(tabs)/dashboard/**`) along with all
+five widgets (Current Phase, Continue, Due Today, Streak, Next-Up, and
+the per-phase progress bars). Dropped the streak model (`src/lib/streak.ts`),
+its hook (`src/state/use-streak.ts`), and its test file. Removed the streak
+side-effect calls from `use-progress.ts` (no more `recordProgressTouch` /
+`recordProgressDone`) and `use-cards.ts` (no more `recordCardReview` plus
+the custom `research-desk:streak:v1` event bus). Rewrote `app/page.tsx`
+as a server `redirect("/curriculum")` and added `app/dashboard/page.tsx`
+(outside the `(tabs)` group so the redirect fires before any sidebar chrome
+renders) as a second redirect for legacy bookmarks. Shrank the sidebar
+`TABS` array from 5 to 4 — the bottom-nav no longer needs its `.slice(0,4)`
+truncation. Moved `DataExportImport` from its dashboard slot to a
+footer section on `/curriculum` so the "one JSON file" export surface
+still has a home. Streak slot is kept in `EXPORT_SLOT_NAMES` for
+back-compat with user-exported JSON bundles, so existing exports still
+round-trip cleanly.
+
+Acceptance verified by hand:
+(a) `curl -sI http://localhost:3100/dashboard` under `pnpm start` returns
+    `HTTP/1.1 307 Temporary Redirect` with `location: /curriculum`. `/`
+    behaves identically.
+(b) `grep -rE 'streak-dot-|current-phase-card|due-today-cta|continue-link|phase-row-' app src`
+    returns zero matches.
+(c) Rendered DOM on `/curriculum` shows exactly four `<a>` children inside
+    the sidebar `<nav aria-label="Primary">`: Curriculum · Flashcards ·
+    Papers · Notes. No Dashboard.
+
+Observed via Playwright MCP at 1440×900 against the production `pnpm
+start` build: navigating to `http://localhost:3100/` lands on
+`/curriculum` with the four-tab sidebar, the Fraunces serif "Foundations"
+phase header, the filter chips (`phase`, `kind`, `track`), the first 11
+items under Phase 1, and the new parchment-bordered Export/Import footer
+pinned below the list. Clicking "Flashcards" in the sidebar routes to
+`/flashcards` with the card-flip surface intact (the Forward vs reverse
+KL prompt renders; 1/2/3/4 grade buttons and "Back to curriculum"
+backlink work). Screenshots archived at
+`s136-01-root-redirects-to-curriculum.png`,
+`s136-02-curriculum-desktop.png`,
+`s136-03-curriculum-footer-export-import.png`,
+`s136-04-export-import-footer.png`,
+`s136-07-flashcards-page.png`.
+
+Quality gates: `npx tsc --noEmit` clean, `pnpm lint` clean, `pnpm test`
+→ 129/129 passing (20 streak tests removed with the deletion), `pnpm
+build` clean — `/` and `/dashboard` both show as static 140 B redirect
+routes, `/curriculum` grew by ≈ 1 kB after absorbing the Export/Import
+footer, no other route deltas.

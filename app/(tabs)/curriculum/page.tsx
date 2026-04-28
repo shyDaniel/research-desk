@@ -2,14 +2,16 @@
 
 // app/(tabs)/curriculum/page.tsx
 //
-// Curriculum tab. Renders all 55+ authored items from src/data/curriculum.ts,
-// grouped by phase, with a filter bar (phase / track / type / state) and
-// per-row tristate progress checkboxes persisted to research-desk:v1:progress.
-// Clicking a row opens a side-sheet with the focus note, canonical URL, and
-// a per-item notes textarea that autosaves to research-desk:v1:item-notes.
+// Curriculum tab — the home page per FINAL_GOAL.md §5. Renders all 55+
+// authored items from src/data/curriculum.ts, grouped by phase, with a
+// filter bar (phase / track / type / state) and per-row tristate progress
+// checkboxes persisted to research-desk:v1:progress. Clicking a row opens
+// a side-sheet with the focus note, canonical URL, and a per-item notes
+// textarea that autosaves to research-desk:v1:item-notes.
 //
-// Deep-link: /curriculum?item=<id> opens the side-sheet for that item on
-// mount. Used by the Dashboard's "Continue" card.
+// The Export / Import JSON buttons (FINAL_GOAL.md §2) live in a quiet
+// footer at the bottom of this page — the Dashboard that used to host
+// them was deleted in S-136.
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -22,6 +24,7 @@ import {
   type CurriculumFiltersValue,
 } from "@/components/curriculum-filters";
 import { CurriculumList } from "@/components/curriculum-list";
+import { DataExportImport } from "@/components/data-export-import";
 import { CURRICULUM } from "@/data/curriculum";
 import { getProgress, summarize } from "@/lib/progress";
 import { useItemNotes } from "@/state/use-item-notes";
@@ -41,9 +44,9 @@ function CurriculumPageInner() {
   const [filters, setFilters] = useState<CurriculumFiltersValue>(DEFAULT_FILTERS);
   const [openId, setOpenId] = useState<string | null>(null);
 
-  // Honor the ?item=<id> deep-link from the Dashboard's "Continue" block.
-  // Runs once on mount so a refresh with the same URL re-opens the sheet,
-  // and only opens if the id actually exists in the authored curriculum.
+  // Honor the ?item=<id> deep-link (e.g. shared URL). Runs once on mount
+  // so a refresh with the same URL re-opens the sheet, and only opens if
+  // the id actually exists in the authored curriculum.
   const searchParams = useSearchParams();
   useEffect(() => {
     const requested = searchParams?.get("item");
@@ -126,6 +129,10 @@ function CurriculumPageInner() {
         onCycle={cycle}
         onClose={() => setOpenId(null)}
       />
+
+      <footer className="mt-16 border-t border-solar-200 pt-10">
+        <DataExportImport />
+      </footer>
     </div>
   );
 }

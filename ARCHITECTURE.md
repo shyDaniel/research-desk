@@ -10,13 +10,13 @@ All user state lives in `localStorage` under a versioned namespace. Content
 ```
 app/
   layout.tsx            root layout, fonts, theme tokens
-  page.tsx              marketing landing (the only non-(tabs) route)
+  page.tsx              redirect to /curriculum (the home tab)
+  dashboard/page.tsx    redirect to /curriculum for legacy bookmarks
   (tabs)/
     layout.tsx          persistent sidebar (desktop) + bottom-nav (mobile)
     _components/
-      sidebar-nav.tsx   client nav with active-state + aria-current
-    dashboard/page.tsx  phase-index dashboard (online)
-    curriculum/page.tsx phase-grouped list + filters + side-sheet (online)
+      sidebar-nav.tsx   client nav with active-state + aria-current (4 tabs)
+    curriculum/page.tsx phase-grouped list + filters + side-sheet (home tab)
     flashcards/page.tsx SM-2 deck, flip + 1/2/3/4 grade + drawer (online)
     papers/page.tsx     index of canonical papers (online)
     papers/[slug]/…     per-paper reveal-gated reader (online)
@@ -29,7 +29,6 @@ src/
   lib/
     sm2.ts              SM-2 spaced-repetition scheduler (pure functions)
     progress.ts         progress reducer (pure)
-    streak.ts           streak reducer (pure)
     storage.ts          versioned localStorage wrapper + migrations
     notes.ts            notes model: defaults, normalise, setPageBody (pure)
     markdown.tsx        safe, small React-native markdown renderer
@@ -37,6 +36,17 @@ src/
     notes-editor.tsx    multi-page notebook: tabbar + split/tabbed preview
   state/                client-side hooks (useProgress, useCards, useNotes, …)
 ```
+
+## Routing — four tabs, curriculum as home
+
+The sidebar has exactly four entries: **Curriculum · Flashcards · Papers ·
+Notes**. `/curriculum` is the landing page; `/` and `/dashboard` both
+issue a server-side `redirect()` to `/curriculum` so legacy bookmarks and
+the root URL both resolve to the single home tab. There is no Dashboard
+route, no streak widget, and no "Continue" card — content lives on each
+tab directly (FINAL_GOAL.md §5: content over UI). `/dashboard` lives
+outside the `(tabs)` route group on purpose, so the redirect fires before
+the sidebar chrome ever renders.
 
 ## Persistence — `research-desk:v1:*`
 
@@ -57,7 +67,7 @@ Keys in v1:
 | `research-desk:v1:cards`             | `Record<cardId, SM2State>`                 |
 | `research-desk:v1:paper-answers`     | `Record<paperId, Record<qId, string>>`     |
 | `research-desk:v1:notes`             | `{ pages: { id, title, body }[] }`         |
-| `research-desk:v1:streak`            | `{ days: string[] /* ISO dates */ }`       |
+| `research-desk:v1:streak`            | legacy slot; no UI writes it. Preserved in Export/Import for back-compat. |
 | `research-desk:v1:item-notes`        | `Record<itemId, string>` (curriculum notes)|
 
 ## Content authoring
@@ -137,8 +147,8 @@ key). Null slots in the bundle round-trip as "skip on import" rather
 than "wipe", so partial exports don't destroy state that wasn't part
 of the payload.
 
-`src/components/data-export-import.tsx` is the visible surface on
-`/dashboard`. Export uses a blob + temporary anchor click (no
+`src/components/data-export-import.tsx` is the visible surface,
+rendered as the footer of `/curriculum`. Export uses a blob + temporary anchor click (no
 navigation, no iframe). Import pipes a hidden `<input type="file">`
 through `FileReader.readAsText`, surfaces malformed files as an
 inline `data-export-error` status, and gates a successful parse

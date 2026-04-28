@@ -5,12 +5,9 @@ import { SidebarNav } from "./_components/sidebar-nav";
 /**
  * Shared chrome for every in-app tab: persistent left sidebar (240–260px per
  * FINAL_GOAL.md §5), header strip with product name + track, and the scrolling
- * content region. The five nav entries — Dashboard, Curriculum, Flashcards,
- * Papers, Notes — are the product's top-level sections per FINAL_GOAL.md §3.
- *
- * Dashboard is the only tab with shipped content as of this iteration; the
- * others render "authoring in progress" stubs that still live inside this
- * layout so clicking them never dumps the user back to the marketing landing.
+ * content region. The four nav entries — Curriculum, Flashcards, Papers,
+ * Notes — are the product's top-level sections per FINAL_GOAL.md §5. There
+ * is no Dashboard; the curriculum page is the home page.
  */
 export default function TabsLayout({ children }: { children: ReactNode }) {
   return (

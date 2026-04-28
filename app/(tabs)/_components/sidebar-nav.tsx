@@ -6,15 +6,14 @@ import { usePathname } from "next/navigation";
 import { useCards } from "@/state/use-cards";
 
 /**
- * The five primary tabs per FINAL_GOAL.md §3. `dashboard` is the landing tab;
- * each subsequent tab surfaces its own real UI.
+ * The four primary tabs per FINAL_GOAL.md §5. Dashboard is gone — the
+ * curriculum page is the home page. Each entry surfaces its own real UI.
  *
  * The Flashcards entry additionally exposes a due-count badge pulled from
- * `useCards().todayDue` — FINAL_GOAL.md §3.3 requires the due count be
- * visible in the sidebar.
+ * `useCards().todayDue` so the user can see at a glance how many cards the
+ * scheduler has queued for today.
  */
 const TABS = [
-  { href: "/dashboard", label: "Dashboard", short: "Desk" },
   { href: "/curriculum", label: "Curriculum", short: "Curr" },
   { href: "/flashcards", label: "Flashcards", short: "Cards" },
   { href: "/papers", label: "Papers", short: "Papers" },
@@ -29,7 +28,7 @@ export function SidebarNav({ variant = "side" }: { variant?: "side" | "bottom" }
   if (variant === "bottom") {
     return (
       <>
-        {TABS.slice(0, 4).map((t) => {
+        {TABS.map((t) => {
           const active = pathname?.startsWith(t.href);
           const isCards = t.href === "/flashcards";
           return (
