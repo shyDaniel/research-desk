@@ -30,10 +30,10 @@ src/
     sm2.ts              SM-2 spaced-repetition scheduler (pure functions)
     progress.ts         progress reducer (pure)
     storage.ts          versioned localStorage wrapper + migrations
-    notes.ts            notes model: defaults, normalise, setPageBody (pure)
+    notes.ts            notes model: { body: string }, normalize (pure)
     markdown.tsx        safe, small React-native markdown renderer
   components/           presentational components
-    notes-editor.tsx    multi-page notebook: tabbar + split/tabbed preview
+    notes-editor.tsx    single scratchpad: textarea + live markdown preview
   state/                client-side hooks (useProgress, useCards, useNotes, …)
 ```
 
@@ -66,7 +66,7 @@ Keys in v1:
 | `research-desk:v1:progress`          | `Record<itemId, "pending"|"inprog"|"done">`|
 | `research-desk:v1:cards`             | `Record<cardId, SM2State>`                 |
 | `research-desk:v1:paper-answers`     | `Record<paperId, Record<qId, string>>`     |
-| `research-desk:v1:notes`             | `{ pages: { id, title, body }[] }`         |
+| `research-desk:v1:notes`             | `{ body: string }` (single scratchpad)     |
 | `research-desk:v1:streak`            | legacy slot; no UI writes it. Preserved in Export/Import for back-compat. |
 | `research-desk:v1:item-notes`        | `Record<itemId, string>` (curriculum notes)|
 
@@ -100,21 +100,29 @@ FINAL_GOAL.md §5.
 autopilot judge can drive the real browser and capture performance traces
 on later iterations.
 
-## Notes notebook
+## Notes scratchpad
 
-`/notes` is a multi-page markdown notebook. Pages are plain `{id, title, body}`
-records held in `src/lib/notes.ts`; `normalizeNotesState` coerces any
-stored payload back to a valid shape and guarantees the three default
-pages (Notes / Scratch / Weekly log) are present even if the user's
-storage payload drifted. `useNotes` (in `src/state/use-notes.ts`) reads
-the persisted envelope on mount, writes through with a 250ms debounce,
-and flushes on unmount so the last keystroke always survives a tab
-close. `NotesEditor` (in `src/components/notes-editor.tsx`) renders the
-page tab bar, the textarea (Geist Mono), and the live preview
-(`renderMarkdown` from `src/lib/markdown.tsx`). Desktop (≥ lg / 1024px)
-shows the two panes side by side; below that a second row of Write /
-Preview pill buttons switches a single column between editor and
-preview so mobile stays usable at 375px.
+`/notes` is a single persistent markdown scratchpad — FINAL_GOAL.md §3
+Page 4 forbids tabs and multiple named pages. `NotesState` in
+`src/lib/notes.ts` is exactly `{ body: string }`, persisted under
+`research-desk:v1:notes` as `{ version:1, data:{ body:"…" } }`.
+`normalizeNotesState` accepts three shapes so a storage payload from
+any app version still hydrates cleanly: the canonical `{ body: string }`,
+a bare string (also treated as the body), and the legacy
+`{ pages: [{id,title,body}, …] }` multi-page shape — legacy bodies are
+concatenated with blank lines between them so nothing a user typed
+under the old schema is lost on upgrade. Anything else falls back to a
+`DEFAULT_BODY` seed. `useNotes` (in `src/state/use-notes.ts`) hydrates
+once on mount, writes through with a 250ms debounce, and flushes on
+unmount so the last keystroke always survives a tab close. If the
+persisted payload isn't already the canonical `{body}` shape, the hook
+rewrites it on hydration so downstream readers (and the JSON export)
+see one stable envelope. `NotesEditor` (in
+`src/components/notes-editor.tsx`) renders one `<textarea>` (Geist
+Mono) and the live preview (`renderMarkdown` from
+`src/lib/markdown.tsx`) side-by-side on desktop (≥ lg / 1024px); below
+that a Write / Preview pill switcher toggles a single column so mobile
+stays usable at 375px.
 
 The markdown renderer is deliberately small and pure-React (no
 `dangerouslySetInnerHTML`). It covers ATX headings, fenced code,

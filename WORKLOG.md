@@ -707,3 +707,54 @@ Quality gates: `npx tsc --noEmit` clean, `pnpm lint` clean, `pnpm test`
 build` clean — `/` and `/dashboard` both show as static 140 B redirect
 routes, `/curriculum` grew by ≈ 1 kB after absorbing the Export/Import
 footer, no other route deltas.
+
+## 2026-04-28 · S-146 · /notes collapsed to single scratchpad — no tabs, no pages
+
+Executed FINAL_GOAL.md §3 Page 4: "No multiple named pages. No tabs.
+Just one persistent scratchpad." `NotesState` in `src/lib/notes.ts` is
+now exactly `{ body: string }`; the `DEFAULT_PAGES` array, `NotePage`
+interface, and `setPageBody` update helper are deleted. `DEFAULT_BODY`
+is a single seed markdown string. `normalizeNotesState` still accepts
+three shapes — canonical `{body}`, bare string, legacy `{pages:[…]}`
+multi-page (concatenated bodies so nothing a user typed under the old
+schema is stranded on upgrade). `useNotes` exposes `body` / `setBody`
+instead of the previous `pages` / `setBody(pageId, body)` surface and
+rewrites the persisted payload to canonical shape on hydration when
+the stored form isn't already `{body}`. `NotesEditor` drops the page
+tab bar and mounts a single `<textarea>` (Geist Mono) side-by-side
+with the live markdown preview on desktop; the mobile Write / Preview
+pill switcher is retained.
+
+Tests rewritten: `src/lib/__tests__/notes.test.ts` now asserts the
+single-body shape (`Object.keys(state) === ["body"]`, `toHaveProperty("pages")`
+is false), exercises the three migration paths of
+`normalizeNotesState` (canonical, bare string, legacy pages →
+concatenated body), and covers `setBody` purity + no-op on unchanged
+input. `pnpm test` → 133/133 passing (+4 net from the replacement
+suite: 7 → 11). `pnpm lint --max-warnings=0`, `pnpm typecheck`, `pnpm
+build` all clean; `/notes` route shrank 5.4 kB → 4.54 kB after the
+tab-bar and page-switching logic came out.
+
+Observed via Playwright MCP against `pnpm start -p 3100`:
+`[data-testid^="page-tab-"].count() === 0`, `textarea.count() === 1`,
+header "The notebook." + "One persistent markdown scratchpad" copy.
+Typed `hello **world** from s146` into the textarea; 500 ms later the
+preview's `strong` textContent was `"world"` and
+`localStorage.getItem("research-desk:v1:notes")` parsed to
+`{version:1, data:{body:"hello **world** from s146"}}` — canonical
+shape, no `pages` key. `page.goto('/notes')` (full reload) restored
+the same body. Legacy-migration probe: seeded
+`{version:1, data:{pages:[{id:"notes",body:"# Old Notes\nthese notes…"},
+{id:"scratch",body:"old scratch…"}, {id:"weekly-log",body:"w/c …"}]}}`
+and reloaded — textarea value came back as the three bodies
+concatenated with `\n\n`, `page-tab-*` count still 0, and the stored
+envelope was rewritten to `{body:"# Old Notes\n…\n\nold scratch…\n\nw/c …"}`.
+Screenshots opened and inspected:
+`s146-01-notes-single-scratchpad.png` (fresh-profile desktop — Fraunces
+"Notebook" h1 in the preview, Geist-Mono textarea on cream, coral
+list bullets, Solarized-blue inline code chips),
+`s146-02-notes-after-legacy-migration.png` (concatenated legacy bodies
+rendered cleanly), `s146-04-notes-mobile-write.png` (desktop post-clear
+baseline). Zero visual regressions in the sidebar — the four tabs
+(Curriculum · Flashcards · Papers · Notes) and the coral "36" due-count
+badge still render as designed.

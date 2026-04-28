@@ -2,20 +2,18 @@
 
 // src/state/use-notes.ts
 //
-// React hook that hydrates the /notes notebook from
-// research-desk:v1:notes (envelope `{version:1, data:{pages:[...]}}`)
-// and writes through on each edit. Autosave is debounced at ~250ms so
-// typing doesn't stampede localStorage. Flushes on unmount so the very
-// last keystroke never races a tab-close.
+// React hook that hydrates the /notes scratchpad from
+// research-desk:v1:notes (envelope `{version:1, data:{body:"…"}}`) and
+// writes through on each edit. Autosave is debounced at ~250ms so typing
+// doesn't stampede localStorage. Flushes on unmount so the very last
+// keystroke never races a tab-close.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  DEFAULT_PAGES,
   initialNotesState,
   normalizeNotesState,
-  setPageBody,
-  type NotePage,
+  setBody as setBodyPure,
   type NotesState,
 } from "@/lib/notes";
 import { STORAGE_KEYS, readEnvelope, writeEnvelope } from "@/lib/storage";
@@ -26,32 +24,33 @@ const DEBOUNCE_MS = 250;
 export interface UseNotesResult {
   state: NotesState;
   hydrated: boolean;
-  pages: NotePage[];
-  setBody: (pageId: string, body: string) => void;
+  body: string;
+  setBody: (body: string) => void;
   replace: (next: NotesState) => void;
 }
 
-/** Hook that owns the notebook state. SSR-safe: no storage access until mount. */
+/** Hook that owns the scratchpad state. SSR-safe: no storage access until mount. */
 export function useNotes(): UseNotesResult {
-  // Start with the default pages so the first paint has real tab labels,
-  // not empty arrays. Hydration below swaps in persisted content if present.
+  // Start with the default seed so the first paint has real text, not an
+  // empty box. Hydration below swaps in the persisted body if present.
   const [state, setState] = useState<NotesState>(() => initialNotesState());
   const [hydrated, setHydrated] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef<NotesState>(state);
 
   // Hydrate exactly once on mount. Read whatever was persisted and normalise
-  // it so a partial payload still has all three required default pages.
+  // it so a legacy `{pages:[…]}` payload migrates forward into the single
+  // body string rather than stranding the user with the seed default.
   useEffect(() => {
     const raw = readEnvelope<unknown>(KEY, null);
     const next = normalizeNotesState(raw);
     setState(next);
     latest.current = next;
     setHydrated(true);
-    // If the persisted payload was missing any default page, write the
-    // normalised version back immediately so downstream readers see the
-    // canonical envelope without waiting for the user to type.
-    if (raw === null || !shapeMatches(raw, next)) {
+    // If the persisted shape wasn't already `{ body: string }`, rewrite it
+    // so every subsequent reader (and the JSON export) sees the canonical
+    // single-body envelope.
+    if (!isCanonicalBodyShape(raw)) {
       writeEnvelope(KEY, next);
     }
   }, []);
@@ -67,9 +66,9 @@ export function useNotes(): UseNotesResult {
     };
   }, []);
 
-  const setBody = useCallback((pageId: string, body: string) => {
+  const setBody = useCallback((body: string) => {
     setState((prev) => {
-      const next = setPageBody(prev, pageId, body);
+      const next = setBodyPure(prev, body);
       latest.current = next;
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => {
@@ -91,27 +90,14 @@ export function useNotes(): UseNotesResult {
     setState(normalised);
   }, []);
 
-  return { state, hydrated, pages: state.pages, setBody, replace };
+  return { state, hydrated, body: state.body, setBody, replace };
 }
 
-// Best-effort shape check so we only write-back when the persisted payload
-// was missing default pages or malformed — avoids a pointless write on every
-// mount when the data is already canonical.
-function shapeMatches(raw: unknown, normalised: NotesState): boolean {
+// Returns true iff the raw persisted payload is already `{ body: string }`
+// (no other keys), so we can skip a pointless write-back on every mount.
+function isCanonicalBodyShape(raw: unknown): boolean {
   if (typeof raw !== "object" || raw === null) return false;
-  const pages = (raw as { pages?: unknown }).pages;
-  if (!Array.isArray(pages)) return false;
-  if (pages.length !== normalised.pages.length) return false;
-  for (let i = 0; i < pages.length; i += 1) {
-    const p = pages[i];
-    if (typeof p !== "object" || p === null) return false;
-    const q = p as { id?: unknown; title?: unknown; body?: unknown };
-    const n = normalised.pages[i];
-    if (!n) return false;
-    if (q.id !== n.id || q.title !== n.title || q.body !== n.body) return false;
-  }
-  return true;
+  const keys = Object.keys(raw as Record<string, unknown>);
+  if (keys.length !== 1 || keys[0] !== "body") return false;
+  return typeof (raw as { body: unknown }).body === "string";
 }
-
-/** Re-export for call-sites (e.g. tests) that want the default set. */
-export { DEFAULT_PAGES };

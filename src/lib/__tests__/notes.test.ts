@@ -1,89 +1,100 @@
 import { describe, it, expect } from "vitest";
 
 import {
-  DEFAULT_PAGES,
+  DEFAULT_BODY,
   initialNotesState,
   normalizeNotesState,
-  setPageBody,
+  setBody,
+  type NotesState,
 } from "@/lib/notes";
 
-describe("notes model", () => {
-  it("exposes at least three named default pages", () => {
-    expect(DEFAULT_PAGES.length).toBeGreaterThanOrEqual(3);
-    const ids = DEFAULT_PAGES.map((p) => p.id);
-    expect(ids).toContain("notes");
-    expect(ids).toContain("scratch");
-    expect(ids).toContain("weekly-log");
-    for (const p of DEFAULT_PAGES) {
-      expect(p.title.length).toBeGreaterThan(0);
-      expect(p.body.length).toBeGreaterThan(0);
-    }
+describe("notes model — single scratchpad (FINAL_GOAL §3 Page 4)", () => {
+  it("NotesState exposes exactly a string body — never a pages array", () => {
+    const s = initialNotesState();
+    const keys = Object.keys(s);
+    expect(keys).toEqual(["body"]);
+    expect(typeof s.body).toBe("string");
+    expect(s.body.length).toBeGreaterThan(0);
+    // The forbidden legacy shape must not leak through.
+    expect(s).not.toHaveProperty("pages");
+    // TypeScript-level: @ts-expect-error demonstrates the pages key is gone,
+    // but that's a compile check; at runtime we just assert it's absent.
   });
 
-  it("initialNotesState returns a fresh, mutable copy", () => {
+  it("DEFAULT_BODY is a non-empty markdown string", () => {
+    expect(typeof DEFAULT_BODY).toBe("string");
+    expect(DEFAULT_BODY.length).toBeGreaterThan(0);
+    expect(DEFAULT_BODY).toContain("#"); // has at least one ATX heading
+  });
+
+  it("initialNotesState returns a fresh, mutable copy each call", () => {
     const a = initialNotesState();
     const b = initialNotesState();
     expect(a).not.toBe(b);
-    expect(a.pages).not.toBe(b.pages);
-    a.pages[0]!.body = "mutated";
-    expect(b.pages[0]!.body).not.toBe("mutated");
+    a.body = "mutated";
+    expect(b.body).not.toBe("mutated");
   });
 
   it("normalizeNotesState falls back to defaults for garbage input", () => {
-    expect(normalizeNotesState(null).pages.length).toBe(DEFAULT_PAGES.length);
-    expect(normalizeNotesState(undefined).pages.length).toBe(DEFAULT_PAGES.length);
-    expect(normalizeNotesState(42).pages.length).toBe(DEFAULT_PAGES.length);
-    expect(normalizeNotesState({ pages: "nope" }).pages.length).toBe(
-      DEFAULT_PAGES.length
-    );
+    expect(normalizeNotesState(null).body).toBe(DEFAULT_BODY);
+    expect(normalizeNotesState(undefined).body).toBe(DEFAULT_BODY);
+    expect(normalizeNotesState(42).body).toBe(DEFAULT_BODY);
+    expect(normalizeNotesState([]).body).toBe(DEFAULT_BODY);
+    expect(normalizeNotesState({}).body).toBe(DEFAULT_BODY);
   });
 
-  it("normalizeNotesState preserves user-authored pages and backfills missing defaults", () => {
-    const input = {
+  it("normalizeNotesState accepts the canonical { body } shape", () => {
+    const out = normalizeNotesState({ body: "hello **world**" });
+    expect(out).toEqual({ body: "hello **world**" });
+    expect(out).not.toHaveProperty("pages");
+  });
+
+  it("normalizeNotesState accepts a raw string payload", () => {
+    const out = normalizeNotesState("just a string");
+    expect(out.body).toBe("just a string");
+  });
+
+  it("normalizeNotesState rejects any 'pages' array when used as the canonical shape", () => {
+    // A plain pages-only payload is legacy; it must migrate into a single
+    // body string rather than being preserved as `pages`.
+    const legacy = {
       pages: [
-        { id: "notes", title: "Notes", body: "custom body" },
-        // "scratch" and "weekly-log" deliberately missing
+        { id: "notes", title: "Notes", body: "first" },
+        { id: "scratch", title: "Scratch", body: "second" },
       ],
     };
-    const out = normalizeNotesState(input);
-    expect(out.pages.find((p) => p.id === "notes")?.body).toBe("custom body");
-    expect(out.pages.some((p) => p.id === "scratch")).toBe(true);
-    expect(out.pages.some((p) => p.id === "weekly-log")).toBe(true);
+    const out = normalizeNotesState(legacy);
+    // The output state MUST NOT carry a pages field — single body only.
+    expect(Object.keys(out)).toEqual(["body"]);
+    expect(out).not.toHaveProperty("pages");
+    // Legacy bodies are concatenated so nothing is lost on upgrade.
+    expect(out.body).toContain("first");
+    expect(out.body).toContain("second");
   });
 
-  it("normalizeNotesState drops malformed entries and duplicates", () => {
-    const input = {
-      pages: [
-        { id: "notes", title: "Notes", body: "ok" },
-        { id: "notes", title: "Duplicate", body: "no" }, // duplicate id dropped
-        { id: "", title: "Empty", body: "x" },              // empty id dropped
-        { id: "custom", title: "Custom", body: "y" },
-        { id: 5, title: "num", body: "z" },                   // bad shape dropped
-      ] as unknown[],
-    };
-    const out = normalizeNotesState(input);
-    const ids = out.pages.map((p) => p.id);
-    expect(ids.filter((i) => i === "notes").length).toBe(1);
-    expect(ids).toContain("custom");
-    expect(ids).toContain("scratch");
-    expect(ids).toContain("weekly-log");
-    expect(ids).not.toContain("");
+  it("normalizeNotesState prefers body when both body and pages are supplied", () => {
+    const out = normalizeNotesState({
+      body: "canonical",
+      pages: [{ id: "x", title: "X", body: "ignored" }],
+    });
+    expect(out).toEqual({ body: "canonical" });
   });
 
-  it("setPageBody updates only the targeted page and returns a new state object", () => {
-    const s0 = initialNotesState();
-    const s1 = setPageBody(s0, "notes", "hello **world**");
+  it("normalizeNotesState returns defaults when pages exist but hold no real bodies", () => {
+    const out = normalizeNotesState({ pages: [{ id: "x", title: "X", body: "" }] });
+    expect(out.body).toBe(DEFAULT_BODY);
+  });
+
+  it("setBody updates the body and returns a new state object", () => {
+    const s0: NotesState = initialNotesState();
+    const s1 = setBody(s0, "hello **world**");
     expect(s1).not.toBe(s0);
-    expect(s1.pages.find((p) => p.id === "notes")?.body).toBe("hello **world**");
-    // Unrelated page is untouched
-    const scratchBefore = s0.pages.find((p) => p.id === "scratch")?.body;
-    const scratchAfter = s1.pages.find((p) => p.id === "scratch")?.body;
-    expect(scratchBefore).toBe(scratchAfter);
+    expect(s1.body).toBe("hello **world**");
   });
 
-  it("setPageBody returns the same object if the id is unknown", () => {
-    const s0 = initialNotesState();
-    const s1 = setPageBody(s0, "nonexistent", "x");
+  it("setBody returns the same object if the body is unchanged", () => {
+    const s0: NotesState = initialNotesState();
+    const s1 = setBody(s0, s0.body);
     expect(s1).toBe(s0);
   });
 });
