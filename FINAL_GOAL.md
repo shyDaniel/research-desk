@@ -1,306 +1,169 @@
 # FINAL_GOAL.md — Research Desk
 
-A production-grade, statically-hosted web app that is Hanyu's personal
-"learning OS" for transitioning from traditional MLE (Meta MLE-bar level) to a
-Research Engineer role at a frontier lab (OpenAI / Anthropic). The primary
-track is **Post-training / RLHF**. A supporting track covers **MLE fundamentals**
-he is under-exposed to (distributed training, GPU performance, eval infra).
+A personal study tool for Hanyu as he transitions from traditional MLE
+to a Research Engineer role at a frontier lab. Primary track: Post-training
+/ RLHF. Supporting track: MLE fundamentals he hasn't touched in prod
+(distributed training, GPU perf, eval infra).
 
-**PRIME DIRECTIVE: Content is the product.** The UI exists to serve the
-content, not the other way round. A flashcard with a fuzzy answer is a
-failure. A curriculum item with a dead link is a failure. A focus note
-that reads like marketing copy is a failure. The aesthetic should be
-beautiful and 大气 — but never at the expense of content depth. When
-forced to trade off, always invest the token budget in making the
-flashcard answer more precise, the focus note more mentor-voiced, or
-the paper question harder. The UI gap between "good enough" and
-"polished" matters less than the content gap between "textbook-accurate"
-and "what a senior RE at OpenAI would say out loud."
+**PRIME DIRECTIVE — in priority order:**
 
-## Playwright visual verification
-
-The MCP Chrome plugin is blocked by DevTools remote debugging policy on
-this machine. Use bundled Playwright (`npx playwright test` with the
-project's Playwright config, or direct script calls using the Playwright
-npm package) instead of the `mcp__playwright__browser_*` tools for
-any screenshot or visual verification. Fallback: use `curl` + DOM text
-assertions via `pnpm start` + `node -e` script to verify rendered HTML
-structure if Playwright also fails.
+1. **Content depth and accuracy above all else.** Every flashcard answer,
+   focus note, and paper question must be the kind of thing a senior RE at
+   OpenAI would say out loud, not a textbook summary. This is the only thing
+   that matters for Hanyu's goal.
+2. **Simplicity of UI.** This is a personal tool for one person. No
+   dashboards, no widgets, no streak counters, no "gamification". The
+   simpler and more direct the interface, the better. If a feature adds
+   complexity without directly helping Hanyu learn, remove it.
+3. **It works reliably.** Persistence, navigation, and core interactions
+   must be bug-free. That's it.
 
 ## User
 
-- Already a senior ML engineer (passed Meta MLE bar, strong inference/serving
-  background: vLLM, KV cache, continuous batching, quantization).
-- Gaps: training-side distributed systems (FSDP/ZeRO/Megatron), GPU kernel
-  work (Triton/CUDA), RL fundamentals, full post-training pipelines.
-- Starting OpenAI Scaled Abuse team; plans to transfer to post-training
-  (Safety Systems / Preparedness / Model Behavior / post-training group)
-  within 12–18 months.
+- Senior ML engineer, passed Meta MLE bar. Strong on inference/serving
+  (vLLM, KV cache, quantization). Zero production training experience.
+- Joining OpenAI Scaled Abuse team. Goal: transfer to post-training /
+  safety research within 12–18 months.
+- Uses this app daily, alone, on desktop. No mobile needed.
 
 ## Hard Acceptance Criteria
 
-All must be TRUE before the judge is allowed to return `done: true`.
+### 1. Tech
 
-### 1. Tech & build
-
-- [ ] Next.js 15 app with TypeScript, Tailwind, pnpm. App Router.
-- [ ] `pnpm install && pnpm build && pnpm start` all succeed from a clean clone.
-- [ ] `pnpm lint` and `pnpm typecheck` pass with zero warnings/errors.
-- [ ] `pnpm test` passes (Vitest + React Testing Library). At minimum: tests
-      for the flashcard SM-2 scheduler, the progress store reducer, and the
-      curriculum filter.
-- [ ] Deployable to Vercel / static hosting. No server-side secrets required.
-- [ ] Lighthouse on `/` in production build: ≥ 95 performance, ≥ 95 a11y,
-      ≥ 95 best practices, ≥ 95 SEO (report committed to `lighthouse.json`).
+- Next.js 15, TypeScript, Tailwind, pnpm. App Router.
+- `pnpm install && pnpm build && pnpm start` succeed from clean clone.
+- `pnpm lint`, `pnpm typecheck`, `pnpm test` all pass, zero errors.
+- No server-side secrets. Deployable to Vercel as-is.
 
 ### 2. Persistence
 
-- [ ] Progress, flashcard scheduler state, paper-question answers, and notes
-      all persist across browser sessions using `localStorage` with a
-      versioned schema (e.g. `research-desk:v1:progress`).
-- [ ] Export/Import JSON: user can download full state and re-upload it. The
-      UI has visible buttons for both.
-- [ ] Schema migrations: if a future schema version is encountered, the app
-      must not crash — it either migrates or falls back gracefully.
+- Progress, flashcard state, paper answers, notes persist in localStorage
+  with a versioned key (e.g. `research-desk:v1:*`).
+- Export/Import as JSON — two buttons somewhere accessible. That's all.
 
-### 3. Sections (tabs)
+### 3. UI — four pages, nothing more
 
-1. **Dashboard**
-   - Current phase card (phase name, 1-line description, progress bar).
-   - "Continue" block — the most recently touched curriculum item with a
-     one-click jump.
-   - Next 3–5 upcoming items in the current phase.
-   - Due flashcards count (today) with a CTA.
-   - Per-phase progress bars for all phases.
-   - Weekly streak indicator (days with ≥ 1 item marked done or ≥ 5 cards
-     reviewed).
+The entire app is four pages accessible from a simple top nav or sidebar.
+No sub-routes, no modals, no drawers unless genuinely necessary.
 
-2. **Curriculum**
-   - ≥ 55 items organized by 5 phases. Each item has:
-     - Title
-     - Type (Paper / Book chapter / Blog post / Video / Code project / Tutorial)
-     - Source link (real URL, never `example.com`; see "Content standards")
-     - Time estimate (hours or "X pages")
-     - **Focus note** — 1–3 sentences telling Hanyu what to actually pay
-       attention to, written as if by a Research Engineer mentor, not a
-       content-farm summarizer.
-     - Track tag: `RLHF` (primary) or `MLE-Fundamentals` (supporting).
-     - Prerequisites (list of prior item IDs).
-   - Filters: by phase, by track, by type, by completion state.
-   - Checkboxes; clicking advances state (pending → in-progress → done),
-     persisted.
-   - Clicking a row opens a side-sheet with the focus note, the link, and a
-     free-text **notes** textarea (per-item, persisted).
+**Page 1 — Curriculum**
+- List of all items grouped by phase. Each item shows: title, type, time
+  estimate, link, and the focus note inline (no click-to-expand needed —
+  the focus note is the point, show it).
+- Three states: pending / in-progress / done. Click to cycle. Persisted.
+- Filter by phase or track (RLHF / MLE-Fundamentals). That's all.
+- No sidesheets, no detail drawers. Everything visible on the page.
 
-3. **Flashcards**
-   - ≥ 30 cards covering load-bearing RLHF + MLE-fundamentals concepts
-     (list in "Content standards" below).
-   - SM-2 spaced-repetition scheduler (Again / Hard / Good / Easy buttons).
-   - Today's due queue is shown first, empty-state when drained.
-   - Flip animation; keyboard shortcuts (Space = flip, 1/2/3/4 = grade).
-   - "Due" count shown in the sidebar badge.
-   - Per-card stats: ease factor, interval, reps (visible in a details
-     drawer).
+**Page 2 — Flashcards**
+- Show one card at a time. Front is visible. Click or Space to flip.
+- After flip: four buttons — Again / Hard / Good / Easy (SM-2 scheduler).
+  Keyboard shortcuts 1/2/3/4.
+- Show how many cards are due today. When queue is empty, say so.
+- No per-card stats drawer. No ease-factor display. Just the card.
 
-4. **Papers**
-   - ≥ 10 canonical papers with per-paper pages containing:
-     - Authors, year, venue, canonical URL (arXiv or conference).
-     - A 3–5 sentence editorial summary explaining *why this paper matters*
-       for Hanyu's goal (not the paper's own abstract).
-     - 5–7 pointed comprehension questions that test understanding of
-       load-bearing details, not trivia (examples in "Content standards").
-     - A per-question answer textarea; answers persist.
-     - A "Reveal my answer" button that is only enabled after the user
-       types ≥ 40 characters (prevents passive reading).
-   - No LLM grading. User is trusted to self-grade. (Static-first by design.)
+**Page 3 — Papers**
+- List of papers. Click one to open its page.
+- Each paper page: title, year, link, a 3–5 sentence "why this matters"
+  note, then the questions listed one by one.
+- Each question: the prompt, a textarea to write the answer, a reveal
+  button (enabled after 40 chars typed). Answers persist.
+- Back button to the list. That's it.
 
-5. **Notes** (global)
-   - Free-form markdown notebook. Supports ≥ 3 named pages. Autosaves.
-   - Rendered markdown preview side-by-side on desktop; tabbed on mobile.
+**Page 4 — Notes**
+- One big textarea. Markdown rendered below it as you type. Autosaves.
+- No multiple named pages. No tabs. Just one persistent scratchpad.
 
-### 4. Content standards — MUST be correct, not generic
+### 4. Content — this is what actually matters
 
-#### Curriculum phases (exact structure required)
+#### Curriculum (≥ 55 items across 5 phases)
 
-- **Phase 1 — Foundations** (~8–12 items)
-  RL fundamentals (Sutton & Barto Ch 1–13), policy-gradient theorem,
-  KL divergence deep-dive, importance sampling, variance reduction.
-  InstructGPT as the first "applied RLHF" read. Spinning Up in Deep RL.
-- **Phase 2 — PPO & Reward Modeling** (~10–14 items)
-  PPO paper + Costa Huang's 37 implementation details + clipped surrogate
-  objective. Christiano et al. 2017 (original preference RL). Bradley-Terry
-  RMs, calibration, length bias. Project: reward model on UltraFeedback
-  subset + PPO on a small LM.
-- **Phase 3 — DPO family & Constitutional AI** (~10 items)
-  DPO derivation, IPO, KTO, SimPO. Constitutional AI, RLAIF, self-rewarding
-  language models. Project: DPO from scratch and compare to Phase 2 PPO.
-- **Phase 4 — Reasoning RL** (~10 items)
-  "Let's Verify Step by Step" (PRMs vs ORMs), DeepSeek-R1 + GRPO,
-  rule-based verifiable rewards. Project: GRPO on GSM8K.
-- **Phase 5 — Specialization & end-to-end** (~8–12 items)
-  Tülu 3 recipe, synthetic data pipelines, RLHF for safety, reward hacking.
-  Capstone: full SFT → RM → PPO/DPO pipeline on a ~1B model, evaluated on
-  MT-Bench.
+Every item must have:
+- A real URL (no placeholder domains).
+- A time estimate.
+- A **focus note** of 2–4 sentences written in the voice of a senior RE
+  mentor — not a summary of the paper, but what to pay attention to and
+  why it matters for Hanyu specifically. This is the highest-value content
+  in the app. Spend the most effort here.
 
-In parallel, tagged `MLE-Fundamentals`:
+Phase structure (same as before):
+- **Phase 1 — Foundations**: S&B Ch 1–13, policy gradient, KL divergence,
+  importance sampling, InstructGPT as first applied read, Spinning Up.
+- **Phase 2 — PPO & Reward Modeling**: PPO paper + Costa Huang's 37
+  details, Christiano 2017, Bradley-Terry RMs, calibration, length bias.
+  Project: RM on UltraFeedback + PPO on small LM.
+- **Phase 3 — DPO family & CAI**: DPO derivation, IPO, KTO, SimPO,
+  Constitutional AI, RLAIF. Project: DPO from scratch vs Phase 2 PPO.
+- **Phase 4 — Reasoning RL**: PRMs vs ORMs, DeepSeek-R1 + GRPO,
+  rule-based rewards. Project: GRPO on GSM8K.
+- **Phase 5 — End-to-end**: Tülu 3, synthetic data, reward hacking,
+  RLHF for safety. Capstone: SFT → RM → PPO/DPO on ~1B model, MT-Bench.
 
-- Distributed training: FSDP tutorial, ZeRO paper, Megatron-LM, 3D
-  parallelism.
-- GPU performance: GPU MODE lectures, Triton tutorials, FlashAttention v1+v2,
-  profiling with Nsight.
-- Eval infra: lm-evaluation-harness, AlpacaEval (length-controlled),
-  MT-Bench, Arena-Hard. Reward-hacking / spec-gaming literature.
+MLE-Fundamentals (tagged, mixed into phases):
+- Distributed training: FSDP, ZeRO, Megatron 3D parallelism.
+- GPU perf: GPU MODE, Triton, FlashAttention, Nsight profiling.
+- Eval: lm-evaluation-harness, AlpacaEval, MT-Bench, Arena-Hard.
 
-#### Link quality rules (enforced by a test)
+URL allow-list test must pass (same domains as before).
 
-- Every curriculum item's `url` must be a real, reachable domain. Forbidden:
-  `example.com`, `lorem`, `TODO`, empty string, `#`.
-- A unit test parses `src/data/curriculum.ts`, asserts every URL matches
-  `^https?://` and that the host is on an allow-list of real domains
-  (`arxiv.org`, `openai.com`, `anthropic.com`, `deepmind.google`,
-  `huggingface.co`, `github.com`, `youtube.com`, `gpumode.com`,
-  `distill.pub`, `www.deeplearningbook.org`, `incompleteideas.net`,
-  `spinningup.openai.com`, `rlhfbook.com`, `allenai.org`, `ai2.allenai.org`,
-  `jmlr.org`, `proceedings.neurips.cc`, `openreview.net`, `pytorch.org`,
-  `nvidia.com`, `triton-lang.org`, `icml.cc`, `eleuther.ai`,
-  `lmsys.org`, `iclr.cc`, `neurips.cc`, `aclanthology.org`,
-  `arxiv-vanity.com`, `microsoft.com`, `research.google`,
-  `meta.com`, `ai.meta.com`, `wandb.ai`, `nathanlambert.com`,
-  `interconnects.ai`). Extend the allow-list only with real, authoritative
-  sources.
+#### Flashcards (≥ 36 cards)
 
-#### Flashcard coverage (≥ 30 cards, must include all of these topics)
+Every card answer must be a full, confident paragraph — the kind of thing
+you'd say in a research interview without notes. Not bullet points, not
+one-liners. Required topics (same list as before — forward/reverse KL,
+PPO clip, DPO derivation, GRPO, ZeRO stages, FSDP vs DDP, FlashAttention,
+reward hacking, GAE, etc.).
 
-- Forward vs reverse KL (and which one RLHF penalizes, why).
-- PPO clipped surrogate objective — state it from memory, including clip
-  range intuition.
-- Why PPO needs a value function and DPO doesn't.
-- Bradley-Terry preference model + log-likelihood form.
-- KL penalty to reference policy — purpose and failure mode if removed.
-- DPO loss derivation sketch: from RLHF objective → closed-form optimal
-  policy → preference likelihood → partition function cancels.
-- GRPO advantage formula (group mean/std baseline, no value network).
-- Process RM vs Outcome RM — when each is appropriate.
-- ZeRO stages 1/2/3 — what is sharded at each stage.
-- FSDP vs DDP — param/grad/optimizer behavior.
-- Activation checkpointing — memory/compute tradeoff.
-- bf16 vs fp16 — range vs precision, why bf16 usually wins for training.
-- KV cache memory formula.
-- Continuous batching (vLLM) — the key insight.
-- FlashAttention — online softmax + tiling, IO-bound → compute-bound.
-- Speculative decoding — draft/verify mechanics.
-- Reward hacking — definition + 3 mitigations.
-- Length bias in RMs — cause + at least 2 mitigations.
-- Constitutional AI — SL-CAI + RL-CAI two-stage recipe.
-- GAE — bias/variance tradeoff via λ.
-- Importance sampling in off-policy RL.
-- Why RLHF improves over SFT even when SFT covers the same distribution.
-- Frozen reference model — why freezing matters.
-- Reward model calibration — definition + how to check it.
-- Tülu 3 recipe — the three stages.
+If any existing card answer is shorter than 4 sentences or reads like a
+Wikipedia intro, rewrite it to be longer and more precise.
 
-Answers must be technically precise, the length of a confident paragraph,
-and not read like marketing copy.
+#### Papers (≥ 10, same list as before)
 
-#### Papers (≥ 10 required)
+Same 10 papers. Each with:
+- A "why this matters for you specifically" editorial note (3–5 sentences,
+  written to Hanyu, not generic).
+- 5–7 questions that test genuine understanding of the load-bearing
+  mechanics, not surface recall. Bad question: "What does DPO stand for?"
+  Good question: "Walk through where the partition function cancels in the
+  DPO derivation."
 
-1. InstructGPT (Ouyang et al. 2022)
-2. PPO (Schulman et al. 2017)
-3. Christiano et al. 2017 (original preference RL paper)
-4. DPO (Rafailov et al. 2023)
-5. Constitutional AI (Bai et al. 2022)
-6. DeepSeek-R1 (2025) + the GRPO / DeepSeekMath paper
-7. "Let's Verify Step by Step" (Lightman et al. 2023)
-8. ZeRO (Rajbhandari et al. 2019)
-9. FlashAttention (Dao et al. 2022) + FlashAttention-2
-10. RLAIF (Lee et al. 2023)
+### 5. Visual design
 
-Each paper gets 5–7 pointed questions. Sample quality bar — InstructGPT:
-"What alignment tax did they observe and on which benchmarks?",
-"Why initialize the value function from the RM rather than the SFT model?",
-"How did they collect comparison data and what were its known biases?".
-NOT acceptable: "What is the paper about?", "Summarize the abstract".
+Keep the Solarized Light + Claude coral palette that's already in the app.
+Do not redesign from scratch — just simplify the layout.
 
-### 5. Aesthetic
+The simplification mandate:
+- **Remove the Dashboard tab entirely.** Replace it with nothing. The
+  curriculum page IS the home page.
+- **Remove the streak widget, weekly progress bars, phase overview cards,
+  continue CTA** — all of it. Replace with: a single line of text at the
+  top of the curriculum page showing "X of 55 done" and "Y cards due today".
+  That is the entire dashboard.
+- **No sidesheets or drawers** anywhere. Everything inline.
+- **No modal overlays.** Links open in a new tab. Paper detail is just a
+  route, not a modal.
+- **Navigation**: four items in a minimal top bar or left sidebar. Active
+  page highlighted. Nothing else in the nav.
 
-The design language is **大气** (dà qì) — spacious, dignified, unhurried.
-Inspired by two sources the user lives in daily:
+Typography, colors, spacing — keep what's already there. Do not touch the
+palette, do not switch fonts. Only simplify structure.
 
-1. **Claude's own palette**: warm off-white backgrounds, generous whitespace,
-   the characteristic coral-orange accent (`#D97757`-ish), soft warm grays for
-   secondary surfaces.
-2. **Solarized Light** (his VSCode theme): base `#FDF6E3` (base3 cream),
-   `#EEE8D5` (base2 parchment), `#657B83` (base00 slate text),
-   `#586E75` (base01 secondary text), with Solarized accent colors for
-   semantic highlights (`#268BD2` blue, `#2AA198` cyan, `#859900` green,
-   `#CB4B16` orange, `#DC322F` red).
+### 6. What to do if content and UI conflict
 
-Unified palette rules:
-- **Background**: `#FDF6E3` (Solarized base3 / Claude cream). Not pure white.
-- **Surface (cards, panels)**: `#EEE8D5` (Solarized base2).
-- **Primary text**: `#586E75` (Solarized base01 — dark slate, not black).
-- **Secondary text**: `#657B83` (Solarized base00).
-- **Accent**: `#D97757` (Claude coral-orange). Used for CTAs, active states,
-  progress fills, flashcard flip button. Do NOT use blue or green as primary
-  accent.
-- **Code/mono highlight**: `#268BD2` (Solarized blue) for inline identifiers.
-- **Success / done states**: `#859900` (Solarized green).
-- **Borders / dividers**: `#EEE8D5` to `#D4CEBD` — never harsh black lines.
+Always prioritize content. If fixing a content gap means the UI is slightly
+less polished, that is the right tradeoff. The user will forgive an ugly
+button but will not forgive a wrong flashcard answer.
 
-Typography:
-- **Display headings** (H1/H2): Fraunces or Newsreader (serif) — sets the
-  "academic research" tone.
-- **Body / UI text**: Plus Jakarta Sans or IBM Plex Sans — clean, warm,
-  not clinical.
-- **Monospace** (identifiers, shortcuts, code snippets): JetBrains Mono or
-  Geist Mono, in the Solarized blue `#268BD2`.
+### 7. Tests
 
-Spacing & layout:
-- Generous padding. Cards have at least 24px internal padding. Nothing cramped.
-- Sidebar is 240–260px wide on desktop, fixed. Main content gets the rest.
-- Section titles use uppercase letter-spacing (tracking-widest) at 11–12px
-  for wayfinding labels — a Solarized-UI convention.
-- Line height 1.6–1.75 for body text. Reader-friendly, not squeezed.
+- SM-2 scheduler unit tests.
+- URL allow-list test on curriculum data.
+- localStorage persistence smoke test.
+- That's enough. Do not add tests for UI components or visual things.
 
-Do NOT:
-- Use dark mode (user lives in Solarized Light all day — match it).
-- Use purple, neon, or generic dark-mode aesthetics.
-- Use pure white (`#FFFFFF`) backgrounds — always the warm cream.
-- Use emoji in navigation or UI chrome.
-- Add gratuitous animations. Card flips and progress fills are the only
-  motion. No parallax, no entrance animations.
+## Definition of done
 
-Responsive:
-- Works at 375px (iPhone SE) and 1440px desktop.
-- Sidebar collapses to a bottom-nav on mobile (4 icons max).
-- On mobile, cards go full-width; serif headings scale down gracefully.
-
-### 6. Accessibility
-
-- All interactive elements reachable by keyboard.
-- Visible focus rings (not `outline: none`).
-- Color contrast meets WCAG AA on all text.
-- Flashcard grading buttons have both keyboard shortcuts and ARIA labels.
-
-### 7. Docs & repo hygiene
-
-- `README.md` with screenshot, tech stack, setup, deploy instructions.
-- `ARCHITECTURE.md` describing the data model (curriculum / cards / papers),
-  persistence, and how to add content.
-- `WORKLOG.md` appended each iteration by autopilot.
-- Everything commits cleanly and pushes.
-
-## Non-goals
-
-- No accounts / auth / multi-user.
-- No backend, no LLM calls. Everything runs from static files + localStorage.
-- No mobile native app.
-- No content outside the two tracks above (no general CS curriculum).
-
-## Definition of done (single sentence)
-
-Hanyu can clone the repo, run `pnpm install && pnpm build && pnpm start`,
-open the app, and use it every day for 12 months as his primary study tool
-without hitting a bug, a broken link, a fuzzy flashcard answer, or a UI
-regression — and a Research Engineer at OpenAI looking over his shoulder
-would not wince at any piece of content.
+Hanyu sits down, opens the app, reads the focus note on Sutton & Barto Ch 13,
+flips through 10 flashcard cards, reads the InstructGPT paper questions,
+writes his answers, and closes the laptop — and tomorrow he is meaningfully
+better prepared for a research engineer role than he was today. The UI never
+got in the way. The content was the whole point.
