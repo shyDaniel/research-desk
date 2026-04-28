@@ -116,3 +116,54 @@ not Anthropic's, which the prior title got wrong); and the 404
 models-matter`. `pnpm build` / `pnpm lint --max-warnings=0` / `pnpm
 typecheck` all clean. Curriculum tab still has no UI to render this data
 in — that's the next subtask.
+
+## 2026-04-27 · S-058 · Primary CTA wired, (tabs) route group shipped
+
+Fixed the `app/page.tsx` "Enter the desk" CTA which was linking back to `/`
+and reloading the landing. New `href="/dashboard"`. Built the App Router
+`(tabs)` route group: `app/(tabs)/layout.tsx` renders a persistent 248px
+sidebar (cream `bg-solar-100/60`, parchment border, coral dot wordmark, five
+tab entries with active "NOW" chip) plus a mobile-only bottom nav (DESK ·
+CURR · CARDS · PAPERS). The nav logic lives in
+`app/(tabs)/_components/sidebar-nav.tsx` (client component, uses
+`usePathname` + `startsWith` for active state; `aria-current="page"` set on
+the live tab; variants for side vs bottom). Dashboard stub at
+`app/(tabs)/dashboard/page.tsx` is honest: it pulls `CURRICULUM` from
+`src/data/curriculum.ts`, renders 5 phase cards with per-phase counts (P1=11,
+P2=13, P3=10, P4=9, P5=12) and an "OPENS WITH" pointer at the first real
+item (Sutton & Barto, PPO paper, DPO, Let's Verify, Tülu 3). A status card
+explains which surface is online and which are still being authored — no
+empty rectangles. Curriculum / Flashcards / Papers / Notes render `TabStub`
+components describing what shipping-next looks like (phase grouping +
+filters, SM-2 + Space/1–4 shortcuts, 10 canonical papers with reveal-gated
+answers, ≥3 markdown pages with autosave), each with a "Back to dashboard"
+pill so no tab is a dead end. Also killed the self-defeating `next:
+dashboard · curriculum · flashcards · papers · notes` narration on the
+landing; replaced with a secondary `Browse the curriculum →` link that
+actually goes somewhere. `.mcp.json` now passes `--browser chromium
+--headless` to `@playwright/mcp` so future iterations don't trip over the
+system-Chrome remote-debug block.
+
+Observed via Playwright (bundled chromium, headless, 1440×900 then 375×812):
+`GET /` → 200, CTA's `href` attribute reads `/dashboard` (asserted); clicking
+it triggers `waitForURL("**/dashboard")` which resolves in <10s; the landed
+page's `h1` reads "The desk, today.", and `nav[aria-label='Primary']` exposes
+five tabs exactly — Dashboard (with "now" chip appended), Curriculum,
+Flashcards, Papers, Notes. Clicking the sidebar Curriculum link lands at
+`/curriculum` with `h1` "55 items, five phases, one path." and
+`aria-current="page"` correctly attached to the Curriculum `<a>` (verified
+via raw HTML). Mobile 375px screenshot shows the desktop sidebar hidden, a
+compact top bar, and the fixed bottom nav visible
+(`nav[aria-label='Mobile primary']`). Body computed style on the dashboard
+is `{ background: rgb(253, 246, 227), color: rgb(88, 110, 117) }` — cream
+`#FDF6E3` / slate `#586E75`, theme tokens intact. Screenshots archived under
+`/tmp/research-desk-shots/s058/{01-landing,02-dashboard,03-curriculum,04-dashboard-mobile}.png`.
+
+Quality gates: `pnpm lint --max-warnings=0` clean, `pnpm typecheck` clean,
+`pnpm test` → 12/12 passing in 233ms, `pnpm build` succeeds with 6 static
+routes (`/`, `/dashboard`, `/curriculum`, `/flashcards`, `/papers`,
+`/notes`), all prerendered, each at ~188 B / 109 kB first-load. Still
+outstanding for later iterations: the localStorage `research-desk:v1:*`
+persistence layer, SM-2 scheduler + its Vitest, ≥30 flashcards data, ≥10
+papers data, real Curriculum / Flashcards / Papers / Notes UIs,
+export/import JSON, streak tracking, Lighthouse report, README screenshot.

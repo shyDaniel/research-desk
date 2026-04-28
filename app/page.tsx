@@ -50,7 +50,7 @@ export default function HomePage() {
 
         <div className="mt-10 flex flex-wrap items-center gap-4">
           <Link
-            href="/"
+            href="/dashboard"
             className="inline-flex items-center gap-2 rounded-sm border border-coral-500 bg-coral-500 px-5 py-2.5 text-sm font-medium text-solar-50 shadow-card transition-colors hover:bg-coral-600 hover:border-coral-600 focus-visible:bg-coral-600"
           >
             Enter the desk
@@ -58,9 +58,12 @@ export default function HomePage() {
               →
             </span>
           </Link>
-          <span className="mono text-[11px] uppercase tracking-[0.22em] text-solar-600">
-            next: dashboard · curriculum · flashcards · papers · notes
-          </span>
+          <Link
+            href="/curriculum"
+            className="mono text-[11px] uppercase tracking-[0.22em] text-solar-600 hover:text-coral-600"
+          >
+            browse the curriculum →
+          </Link>
         </div>
       </section>
 

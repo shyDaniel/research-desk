@@ -10,8 +10,17 @@ All user state lives in `localStorage` under a versioned namespace. Content
 ```
 app/
   layout.tsx            root layout, fonts, theme tokens
-  page.tsx              landing / dashboard shell
-  (tabs)/…              dashboard · curriculum · flashcards · papers · notes
+  page.tsx              marketing landing (the only non-(tabs) route)
+  (tabs)/
+    layout.tsx          persistent sidebar (desktop) + bottom-nav (mobile)
+    _components/
+      sidebar-nav.tsx   client nav with active-state + aria-current
+      tab-stub.tsx      "shipping next" shell for tabs without full UIs yet
+    dashboard/page.tsx  phase-index dashboard (online)
+    curriculum/page.tsx (stub until the list UI ships)
+    flashcards/page.tsx (stub until SM-2 ships)
+    papers/page.tsx     (stub until paper pages ship)
+    notes/page.tsx      (stub until the notebook ships)
 src/
   data/
     curriculum.ts       ≥ 55 curated items, real URLs
