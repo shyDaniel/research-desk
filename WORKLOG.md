@@ -404,3 +404,70 @@ markdown notebook with ≥3 pages + autosave, Export/Import JSON UI,
 `lighthouse.json` committed, README rewrite to Solarized Light +
 coral with a real UI screenshot, flashcard-flip crossfade polish,
 axe-automated a11y audit.
+
+## 2026-04-27 · S-114 · Dashboard tab: 6 live widgets + streak reducer
+
+Replaced the "coming online" Dashboard stub with the real daily
+landing that FINAL_GOAL §3.1 names. New `src/lib/streak.ts` is a
+pure reducer (no React, no I/O): `StreakState { days:string[],
+cardsToday:{date,count}, lastTouched?:{id,at} }`, with
+`recordProgressDone` / `recordProgressTouch` / `recordCardReview`
+(threshold `DAILY_CARD_THRESHOLD=5`) and projections `last7` /
+`streakCount` / `currentRun`. `src/lib/__tests__/streak.test.ts`
+adds 20 cases (isoDate, idempotent day insert, threshold rollover,
+last-7 projection, consecutive-run counting). `src/state/use-
+streak.ts` wraps the reducer over `research-desk:v1:streak` with
+hydrate-on-mount and a custom `research-desk:streak-change` window
+event so cross-hook writes re-render live within one document (the
+`storage` event only fires across tabs). `use-progress.ts` now
+side-effects into the streak blob on every `cycle` / `set` (done →
+adds today, any touch → updates `lastTouched` for the Continue
+widget). `use-cards.ts` calls `recordCardReview` on every grade,
+which only marks the day once 5 reviews land. `app/(tabs)/
+curriculum/page.tsx` now reads `?item=<id>` through `useSearchParams`
+inside a `Suspense` boundary and opens the side-sheet on mount, so
+Dashboard's Continue CTA lands directly in the detail view.
+
+The Dashboard page itself (`app/(tabs)/dashboard/page.tsx`) is a
+client component with six widgets in a deliberate top-to-bottom
+order: CurrentPhaseCard (earliest phase with a non-done item, with
+a coral progress bar + done/inprog/pending counts) and ContinueCard
+(most-recently-touched inprog item, else first inprog, else first
+pending) in the first row; DueTodayCard (coral CTA "Review N cards"
+into `/flashcards`) and StreakCard (7 dots with TODAY slot ringed,
+count + consecutive-run text) in the second row; NextUp listing the
+next 3–5 queued items of the current phase with type·time·track
+meta; per-phase progress bars for all five phases. A fresh-profile
+render shows "0 of 55 done", Phase 1 Foundations at 0/11, Continue
+pointing at `p1-sutton-barto` (first pending), Due Today = 36 cards,
+streak = 0 days, 5 next-up rows populated from the authored
+curriculum.
+
+Observed via bundled Playwright (MCP's system-Chrome is still blocked
+by `DevTools remote debugging is disallowed by the system admin` on
+this machine) against `pnpm start -p 3100`: GET `/dashboard` returns
+HTTP 200 with 32 KB HTML. DOM probe at 1440×900: `[data-testid=
+current-phase-card]` ×1, `[data-testid=continue-link]` href =
+`/curriculum?item=p1-sutton-barto`, `[data-testid=due-today-cta]`
+text "Review 36 cards" href=`/flashcards`, `[role=progressbar]` ×6
+(1 current-phase + 5 per-phase), `[data-testid^="streak-dot-"]` ×7,
+`[data-testid=next-up-row]` ×5, `[data-testid^="phase-row-"]` ×5,
+zero matches for "coming online" or "Curriculum is the first
+surface". Clicking `[data-testid=continue-link]` navigates to
+`/curriculum?item=p1-sutton-barto` and the detail sheet is present
+in the DOM (`sheetOpen: true`), confirming the Dashboard ↔
+Curriculum handoff is live end-to-end. Screenshots archived at
+`/tmp/dashboard.png` and `/tmp/dashboard-after-deeplink.png`.
+
+Quality gates: `pnpm test` green at 111/111 (20 new streak tests +
+prior suites), `pnpm lint --max-warnings=0` clean, `pnpm typecheck`
+clean, `pnpm build` clean — `/dashboard` route weighs 4.03 kB /
+141 kB first-load, `/curriculum` unchanged at its prior budget. No
+stale copy left on Dashboard; the only remaining "coming online"
+strings in the repo live in this WORKLOG itself.
+
+Still outstanding for later iterations: Notes markdown notebook
+with ≥3 pages + autosave, Export/Import JSON UI, `lighthouse.json`
+committed, README rewrite to Solarized Light + coral with a real UI
+screenshot, flashcard-flip crossfade polish, axe-automated a11y
+audit.

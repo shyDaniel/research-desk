@@ -7,8 +7,12 @@
 // per-row tristate progress checkboxes persisted to research-desk:v1:progress.
 // Clicking a row opens a side-sheet with the focus note, canonical URL, and
 // a per-item notes textarea that autosaves to research-desk:v1:item-notes.
+//
+// Deep-link: /curriculum?item=<id> opens the side-sheet for that item on
+// mount. Used by the Dashboard's "Continue" card.
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { CurriculumDetailSheet } from "@/components/curriculum-detail-sheet";
 import {
@@ -24,10 +28,32 @@ import { useItemNotes } from "@/state/use-item-notes";
 import { useProgress } from "@/state/use-progress";
 
 export default function CurriculumPage() {
+  return (
+    <Suspense fallback={<CurriculumShell />}>
+      <CurriculumPageInner />
+    </Suspense>
+  );
+}
+
+function CurriculumPageInner() {
   const { progress, hydrated, cycle } = useProgress();
   const { notes, setNote } = useItemNotes();
   const [filters, setFilters] = useState<CurriculumFiltersValue>(DEFAULT_FILTERS);
   const [openId, setOpenId] = useState<string | null>(null);
+
+  // Honor the ?item=<id> deep-link from the Dashboard's "Continue" block.
+  // Runs once on mount so a refresh with the same URL re-opens the sheet,
+  // and only opens if the id actually exists in the authored curriculum.
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const requested = searchParams?.get("item");
+    if (!requested) return;
+    const exists = CURRICULUM.some((i) => i.id === requested);
+    if (exists) setOpenId(requested);
+    // Intentionally only reads on the initial search params so manual
+    // closes don't fight with the URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const progressFor = (id: string) => getProgress(progress, id);
 
@@ -100,6 +126,23 @@ export default function CurriculumPage() {
         onCycle={cycle}
         onClose={() => setOpenId(null)}
       />
+    </div>
+  );
+}
+
+/** Render-on-suspend fallback — same chrome minus the interactive bits so
+ *  the layout doesn't jump when the search-params promise resolves. */
+function CurriculumShell() {
+  return (
+    <div className="mx-auto max-w-5xl">
+      <header className="border-b border-solar-200 pb-6">
+        <p className="mono text-[11px] uppercase tracking-[0.28em] text-coral-500">
+          Curriculum
+        </p>
+        <h1 className="mt-3 font-serif text-4xl leading-tight text-solar-800 sm:text-5xl">
+          {CURRICULUM.length} items, five phases, one path.
+        </h1>
+      </header>
     </div>
   );
 }

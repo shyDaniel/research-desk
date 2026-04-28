@@ -19,8 +19,33 @@ import {
   type SM2State,
 } from "@/lib/sm2";
 import { STORAGE_KEYS, readEnvelope, writeEnvelope } from "@/lib/storage";
+import {
+  EMPTY_STREAK,
+  recordCardReview,
+  type StreakState,
+} from "@/lib/streak";
 
 const KEY = STORAGE_KEYS.cards;
+const STREAK_KEY = STORAGE_KEYS.streak;
+const STREAK_EVENT = "research-desk:streak-change";
+
+/**
+ * Side-effect: every card grade increments the streak's rolling daily
+ * card-review counter. FINAL_GOAL §3.1 qualifies a day as "streak" once
+ * the counter crosses 5; the reducer in src/lib/streak handles both the
+ * threshold and the date rollover.
+ */
+function recordStreakReview() {
+  if (typeof window === "undefined") return;
+  const prev = readEnvelope<StreakState>(STREAK_KEY, EMPTY_STREAK);
+  const next = recordCardReview(prev, Date.now());
+  writeEnvelope(STREAK_KEY, next);
+  try {
+    window.dispatchEvent(new Event(STREAK_EVENT));
+  } catch {
+    // ignore
+  }
+}
 
 type CardsMap = Record<string, SM2State>;
 
@@ -69,6 +94,7 @@ export function useCards(nowProvider: () => number = Date.now): UseCardsResult {
         return nextMap;
       });
       setTick((t) => t + 1);
+      recordStreakReview();
     },
     [nowProvider]
   );
