@@ -117,6 +117,40 @@ anchors. This was chosen over react-markdown + rehype-sanitize because
 the surface area is small, the dependency cost is non-trivial, and the
 XSS surface is bounded by local-only storage.
 
+## Export / Import JSON
+
+`src/lib/storage.ts` exposes a pure serializer
+(`buildExportBundle`, `serializeExportBundle`, `parseImportBundle`,
+`summarizeBundle`, `applyImportBundle`) that round-trips every
+`research-desk:v1:*` slot through a single
+`{ schema: "research-desk", version: 1, exportedAt, data }` envelope.
+Slot names are the stable array `EXPORT_SLOT_NAMES = ["progress",
+"cards", "paperAnswers", "notes", "streak", "itemNotes"]`. All
+functions accept injectable readers / writers so the Vitest suite
+can exercise them without touching `window`; defaults use the real
+localStorage helpers.
+
+`parseImportBundle` never throws. It returns a discriminated
+`ImportParseResult` whose failure side is one of five structured
+codes: `invalid-json`, `not-a-bundle` (including arrays / primitives),
+`wrong-schema`, `unknown-version`, or `bad-data-shape` (missing slot
+key). Null slots in the bundle round-trip as "skip on import" rather
+than "wipe", so partial exports don't destroy state that wasn't part
+of the payload.
+
+`src/components/data-export-import.tsx` is the visible surface on
+`/dashboard`. Export uses a blob + temporary anchor click (no
+navigation, no iframe). Import pipes a hidden `<input type="file">`
+through `FileReader.readAsText`, surfaces malformed files as an
+inline `data-export-error` status, and gates a successful parse
+behind an inline `role="dialog"` confirmation panel that previews
+which of the six slots will be written. Clicking "Overwrite my data"
+calls `applyImportBundle` and schedules a `window.location.reload()`
+after 400ms so every hook rehydrates from its single source of
+truth. A reload is cleaner than calling `replace()` on each hook
+individually, and matches what a power user expects from
+"Import my data".
+
 ## Decisions made at bootstrap
 
 - **Tailwind v3, not v4.** v4 PostCSS plugin layout is still settling; v3

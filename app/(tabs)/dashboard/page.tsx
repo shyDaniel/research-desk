@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 
 import { CURRICULUM } from "@/data/curriculum";
+import { DataExportImport } from "@/components/data-export-import";
 import { getProgress, summarize } from "@/lib/progress";
 import type { Phase } from "@/data/types";
 import { useCards } from "@/state/use-cards";
@@ -274,6 +275,25 @@ export default function DashboardPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* DATA — Export / Import JSON ──────────────────────────────────── */}
+      <section
+        aria-label="Export or import your data"
+        data-testid="data-section"
+        className="mt-12 mb-4"
+      >
+        <div className="border-b border-solar-200 pb-3">
+          <p className="mono text-[11px] uppercase tracking-[0.28em] text-coral-500">
+            Data
+          </p>
+          <h2 className="mt-1 font-serif text-2xl leading-tight text-solar-800">
+            Your study state, in one file.
+          </h2>
+        </div>
+        <div className="mt-5">
+          <DataExportImport />
+        </div>
       </section>
     </div>
   );

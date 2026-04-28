@@ -550,3 +550,50 @@ Still outstanding for later iterations: Export/Import JSON UI,
 `lighthouse.json` committed, README rewrite to Solarized Light +
 coral with a real UI screenshot, flashcard-flip crossfade polish,
 axe-automated a11y audit.
+
+## 2026-04-28 · S-126 · Export / Import JSON UI
+
+Added visible "Export data" / "Import data" buttons on `/dashboard`
+that round-trip every `research-desk:v1:*` slot through one JSON
+file (FINAL_GOAL.md §2). `src/lib/storage.ts` grew a pure,
+injectable serializer — `buildExportBundle`, `serializeExportBundle`,
+`parseImportBundle`, `summarizeBundle`, `applyImportBundle` — that
+emits `{schema:"research-desk", version:1, exportedAt, data:{...6
+slots}}` and refuses unknown versions / wrong schema / malformed
+JSON with one of five structured error codes. `src/components/
+data-export-import.tsx` renders the coral-CTA Export button, the
+ghost Import button, a hidden file input, and an inline
+`role="dialog"` confirmation panel that previews which of the six
+slots will be written before the user clicks "Overwrite my data".
+Successful import reloads the page 400ms later so every hook
+rehydrates from its single source of truth. Null slots in the
+bundle are skipped rather than wiped, so partial exports don't
+destroy state.
+
+Quality gates: 149 / 149 Vitest tests pass (16 new in
+`src/lib/__tests__/export-import.test.ts` covering schema/version
+guard, round-trip, all five error codes, null-skip semantics);
+`pnpm lint --max-warnings=0`, `pnpm typecheck`, `pnpm build` all
+clean. Dashboard bundle grew from 4.03 kB → 5.99 kB.
+
+Observed via bundled Playwright (MCP Chrome blocked by admin
+policy) at `/Users/hanyusong/RLHF/research-desk/scripts/
+drive-export-import.mjs`: 34 / 34 assertions passed end-to-end —
+seeded localStorage fixture, clicked Export, captured the
+`research-desk-2026-04-28.json` download, parsed it and asserted
+every slot round-tripped (progress sutton=done, cards KL-card
+EF=2.6, paper-answers instructgpt alignment-tax 219-char paragraph,
+3 notes pages, 3 streak days, item-notes sutton). Then wiped
+localStorage, re-uploaded via `setInputFiles`, saw all 6 slots
+marked present in the confirm dialog, clicked "Overwrite my data",
+waited for the reload, and asserted every v1 envelope rehydrated
+exactly. Version-guard case: uploading `{schema:"research-desk",
+version:99,...}` surfaced the inline "IMPORT FAILED — This export
+is from a different schema version (v99)…" error with no confirm
+dialog and no crash; the Data card stayed mounted. Wrong-schema
+case: uploading `{schema:"some-other-app",version:1,...}` surfaced
+"IMPORT FAILED — This file isn't a Research Desk export (saw schema
+'some-other-app')". Screenshots archived at
+`/tmp/research-desk-shots/s126/{01-dashboard-data-section,
+02-import-confirm, 03-post-import-dashboard,
+04-version-guard-error}.png`.
