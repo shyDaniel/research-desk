@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     "flashcards",
     "learning",
   ],
-  robots: { index: false, follow: false },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {

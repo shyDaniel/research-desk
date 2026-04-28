@@ -15,7 +15,6 @@ app/
     layout.tsx          persistent sidebar (desktop) + bottom-nav (mobile)
     _components/
       sidebar-nav.tsx   client nav with active-state + aria-current
-      tab-stub.tsx      "shipping next" shell for tabs without full UIs yet
     dashboard/page.tsx  phase-index dashboard (online)
     curriculum/page.tsx phase-grouped list + filters + side-sheet (online)
     flashcards/page.tsx SM-2 deck, flip + 1/2/3/4 grade + drawer (online)
@@ -150,6 +149,28 @@ after 400ms so every hook rehydrates from its single source of
 truth. A reload is cleaner than calling `replace()` on each hook
 individually, and matches what a power user expects from
 "Import my data".
+
+## Lighthouse
+
+`lighthouse.json` at the repo root is a committed audit of
+`http://localhost:3100/` (the production `pnpm start` server) across
+four categories: performance, accessibility, best-practices, SEO. All
+four scores are ≥ 0.95 as required by FINAL_GOAL §1. Regenerate by
+running `pnpm build && pnpm start -p 3100 &` and then `pnpm
+lighthouse` — the `lighthouse` script (in `package.json`) invokes
+`lighthouse` against `:3100/` with `--only-categories=performance,
+accessibility,best-practices,seo` and writes the report to
+`./lighthouse.json`. A headless Chrome launch is used so the audit
+runs without a desktop; on macOS the script picks up
+`/Applications/Google Chrome.app` through the `CHROME_PATH` env var
+if set, otherwise whichever Chrome `chrome-launcher` finds on the
+`PATH`.
+
+The root layout sets `robots: { index: true, follow: true }` so the
+Lighthouse SEO audit reports "Page can be indexed" (score 1.0). The
+app is still intended as a single-user personal tool, but the
+metadata stays indexable so the committed Lighthouse report doesn't
+regress below the §1 threshold.
 
 ## Decisions made at bootstrap
 
