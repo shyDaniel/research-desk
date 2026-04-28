@@ -17,8 +17,8 @@ app/
       sidebar-nav.tsx   client nav with active-state + aria-current
       tab-stub.tsx      "shipping next" shell for tabs without full UIs yet
     dashboard/page.tsx  phase-index dashboard (online)
-    curriculum/page.tsx (stub until the list UI ships)
-    flashcards/page.tsx (stub until SM-2 ships)
+    curriculum/page.tsx phase-grouped list + filters + side-sheet (online)
+    flashcards/page.tsx SM-2 deck, flip + 1/2/3/4 grade + drawer (online)
     papers/page.tsx     (stub until paper pages ship)
     notes/page.tsx      (stub until the notebook ships)
 src/

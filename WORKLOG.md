@@ -235,3 +235,91 @@ Still outstanding for later iterations: SM-2 scheduler module + tests,
 reveal-gated answers, markdown notebook, export/import JSON UI, streak
 tracker, real dashboard widgets (current-phase / Continue / due count),
 Lighthouse report, README screenshot.
+
+## 2026-04-27 · S-086 · Flashcards tab — SM-2 scheduler, 36 cards, flip UI
+
+Replaced the `/flashcards` TabStub with the real surface. New modules:
+`src/lib/sm2.ts` (pure SM-2: `Grade` = again/hard/good/easy, `SM2State`,
+`MIN_EASE=1.3`, `DEFAULT_EASE=2.5`, `initialState`, `grade`,
+`nextIntervalDays`, `isDue`, `partitionDeck`, `dueCount`. Anki-style q
+mapping: again→q2 (10-min relearn, reps reset, lapses++), hard→q3
+(interval×1.2 after first rep), good→q4 ({1d,6d,interval×ease}), easy→q5
+({4d,7d,interval×ease×1.3}). EF drift EF+(0.1−(5−q)(0.08+0.02(5−q)))
+clamped at 1.3). `src/data/flashcards.ts` (36 cards covering every
+FINAL_GOAL §4 topic: forward/reverse KL, PPO clipped surrogate, PPO vs
+DPO value fn, Bradley-Terry, KL penalty, DPO derivation, GRPO advantage,
+PRM vs ORM, ZeRO stages, FSDP vs DDP, activation checkpointing, bf16 vs
+fp16, KV cache, continuous batching, FlashAttention, speculative
+decoding, reward hacking, length bias, CAI, GAE, importance sampling,
+RLHF vs SFT, frozen reference, RM calibration, Tülu 3, RLAIF,
+Christiano '17, alignment tax, 37 PPO details, eval harnesses,
+IPO/KTO/SimPO, UltraFeedback, Megatron parallelism, Triton, DeepSeek R1,
+rule-based rewards — answers ≥200 chars, paragraph-length, no
+blurb-summary). `src/state/use-cards.ts` (React hook: hydrates from
+`research-desk:v1:cards` once on mount, write-through on each `grade`,
+exposes `{states, hydrated, due, upcoming, todayDue, grade, getState,
+reset, replace}` with memoised partition).
+
+Rewrote `app/(tabs)/flashcards/page.tsx` end-to-end: perspective-1600px
+container with `transform-style: preserve-3d` + rotateX(180deg) 600ms
+cubic-bezier flip, keyboard handler (Space flips; 1/2/3/4 grade only
+when flipped; ignored inside textarea/input), GradingRow with four
+Solarized-tinted buttons (Again=red `#DC322F`, Hard=yellow `#B58900`,
+Good=coral `#D97757`, Easy=green `#859900`), DetailsStrip drawer
+showing ease/interval/reps/lapses/next-due plus a preview row of what
+the next interval/ease would be under each of the four grades,
+EmptyState shown when the due queue drains, and a HydratingSkeleton to
+suppress SSR-flicker. Sidebar nav (`app/(tabs)/_components/sidebar-nav.tsx`)
+now renders a `data-testid=cards-due-badge` coral badge next to
+Flashcards on both desktop and mobile variants once `useCards` hydrates
+and `todayDue > 0`.
+
+Tests: `src/lib/__tests__/sm2.test.ts` (14 tests — initialState
+invariants; good 0→1d / 1→6d / 2→interval×ease; easy first=4d second=7d;
+hard drops ease ~0.14; again resets reps, increments lapses, 10-min
+relearn, 20× again clamps at 1.3; isDue/dueCount/partitionDeck;
+nextIntervalDays) and `src/data/__tests__/flashcards.test.ts` (31 tests
+— ≥30 cards, unique ids, non-empty fronts, answers ≥200 chars, no
+placeholder tokens, prereqs resolve, plus 25 `it.each` topic-probes
+pinning one card id per FINAL_GOAL §4 topic). All gates clean:
+`pnpm test` → 81/81 passing in 254ms (10 storage + 14 progress + 14 sm2
++ 31 flashcards + 12 curriculum); `pnpm lint --max-warnings=0`,
+`pnpm typecheck`, `pnpm build` all clean — `/flashcards` route is
+3.97 kB / 130 kB first-load (up from the 183 B stub).
+
+Observed via bundled playwright-chromium headless (system-Chrome
+remote-debug is still blocked by admin policy) driving
+`pnpm exec next start -p 3100` at 1440×900 then 375×812:
+`/flashcards` → 200, page no longer contains the string
+"Shipping next"; `[data-testid=due-count]` → "36";
+`[data-testid=card-stage]`'s `data-card-id` on load = `kl-forward-reverse`
+(the seed order first element, since no state → all-due → queue preserves
+deck order); pressing Space flips `data-flipped` → `true`; pressing `3`
+(Good) advances `data-card-id` to `ppo-clipped-surrogate`;
+`[data-testid=details-toggle]` opens the drawer showing `detail-ease`
+= "2.50", `detail-interval` = "0", `detail-reps` = "0" for the fresh
+successor. Reload (`page.reload()`): `data-card-id` stays on
+`ppo-clipped-surrogate` — the graded card's new due date (T+1d) has
+pushed it out of today's queue, so persistence to
+`research-desk:v1:cards` is verified. Sidebar badge
+`data-testid=cards-due-badge` reads "36" on initial hydration. Body
+computed style: `{ background: rgb(253, 246, 227), color: rgb(88, 110,
+117) }` — theme tokens intact.
+
+Known visual issue not fully resolved this iteration: under headless
+Chromium `backface-visibility: hidden` combined with
+`transform-style: preserve-3d` doesn't always hide the rear face
+cleanly — the captured screenshots show the wrong face painted on top
+even though React state (`data-flipped`, `aria-hidden`) is correct and
+all behavioural assertions (flip, grade, advance, persist) pass. The
+behaviour is correct; the visual layer needs an opacity/pointer-events
+crossfade on top of the 3D transform to be bulletproof across
+renderers. Flagged for the next iteration — doesn't change any of the
+functional invariants above.
+
+Screenshots archived under `/tmp/research-desk-shots/s086/{01-front,
+02-flipped,03-advanced,04-details,05-mobile,06-sidebar}.png`. Still
+outstanding for later iterations: ≥10 papers data + per-paper reveal
+pages, markdown notebook with autosave, export/import JSON UI, streak
+tracker, real dashboard widgets (current-phase / Continue / due count),
+the flip-crossfade polish, Lighthouse report, README screenshot.

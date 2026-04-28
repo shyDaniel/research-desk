@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useCards } from "@/state/use-cards";
+
 /**
  * The five primary tabs per FINAL_GOAL.md §3. `dashboard` is the landing tab;
- * curriculum / flashcards / papers / notes render stubs until the real UIs
- * ship in subsequent iterations — but their routes exist so the sidebar is
- * never a dead end.
+ * each subsequent tab surfaces its own real UI.
+ *
+ * The Flashcards entry additionally exposes a due-count badge pulled from
+ * `useCards().todayDue` — FINAL_GOAL.md §3.3 requires the due count be
+ * visible in the sidebar.
  */
 const TABS = [
   { href: "/dashboard", label: "Dashboard", short: "Desk" },
@@ -19,24 +23,35 @@ const TABS = [
 
 export function SidebarNav({ variant = "side" }: { variant?: "side" | "bottom" }) {
   const pathname = usePathname();
+  const { todayDue, hydrated } = useCards();
+  const showBadge = hydrated && todayDue > 0;
 
   if (variant === "bottom") {
     return (
       <>
         {TABS.slice(0, 4).map((t) => {
           const active = pathname?.startsWith(t.href);
+          const isCards = t.href === "/flashcards";
           return (
             <Link
               key={t.href}
               href={t.href}
               aria-current={active ? "page" : undefined}
-              className={`flex-1 text-center py-2 text-[11px] uppercase tracking-[0.18em] ${
+              className={`relative flex-1 text-center py-2 text-[11px] uppercase tracking-[0.18em] ${
                 active
                   ? "text-coral-500"
                   : "text-solar-600 hover:text-solar-700"
               }`}
             >
               {t.short}
+              {isCards && showBadge ? (
+                <span
+                  data-testid="bottom-cards-badge"
+                  className="absolute top-1 right-2 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-coral-500 px-1 font-serif text-[10px] leading-none text-solar-50"
+                >
+                  {todayDue}
+                </span>
+              ) : null}
             </Link>
           );
         })}
@@ -52,6 +67,7 @@ export function SidebarNav({ variant = "side" }: { variant?: "side" | "bottom" }
       <ul className="flex flex-col gap-0.5">
         {TABS.map((t) => {
           const active = pathname?.startsWith(t.href);
+          const isCards = t.href === "/flashcards";
           return (
             <li key={t.href}>
               <Link
@@ -72,11 +88,22 @@ export function SidebarNav({ variant = "side" }: { variant?: "side" | "bottom" }
                   />
                   {t.label}
                 </span>
-                {active ? (
-                  <span className="mono text-[10px] uppercase tracking-[0.2em] text-coral-500">
-                    now
-                  </span>
-                ) : null}
+                <span className="flex items-center gap-2">
+                  {isCards && showBadge ? (
+                    <span
+                      data-testid="cards-due-badge"
+                      aria-label={`${todayDue} flashcards due today`}
+                      className="mono inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-coral-500 px-1.5 text-[10px] font-medium leading-none text-solar-50"
+                    >
+                      {todayDue}
+                    </span>
+                  ) : null}
+                  {active ? (
+                    <span className="mono text-[10px] uppercase tracking-[0.2em] text-coral-500">
+                      now
+                    </span>
+                  ) : null}
+                </span>
               </Link>
             </li>
           );
