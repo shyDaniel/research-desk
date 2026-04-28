@@ -54,6 +54,7 @@ Keys in v1:
 | `research-desk:v1:paper-answers`     | `Record<paperId, Record<qId, string>>`     |
 | `research-desk:v1:notes`             | `{ pages: { id, title, body }[] }`         |
 | `research-desk:v1:streak`            | `{ days: string[] /* ISO dates */ }`       |
+| `research-desk:v1:item-notes`        | `Record<itemId, string>` (curriculum notes)|
 
 ## Content authoring
 

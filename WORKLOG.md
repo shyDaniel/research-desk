@@ -167,3 +167,71 @@ outstanding for later iterations: the localStorage `research-desk:v1:*`
 persistence layer, SM-2 scheduler + its Vitest, ≥30 flashcards data, ≥10
 papers data, real Curriculum / Flashcards / Papers / Notes UIs,
 export/import JSON, streak tracking, Lighthouse report, README screenshot.
+
+## 2026-04-27 · S-074 · Curriculum tab — real list UI, filters, progress, notes side-sheet
+
+Replaced the `/curriculum` TabStub with the full authored UI. New modules:
+`src/lib/storage.ts` (versioned `{version,data}` envelope wrapper over
+localStorage — reads null-on-missing, falls back gracefully on unreadable
+and future-version payloads, composes forward migrations),
+`src/lib/progress.ts` (pure reducer — `cycleProgress` advances pending →
+inprog → done → pending and removes the entry on wrap to keep the
+persisted blob tight; `summarize` for dashboards),
+`src/state/use-progress.ts` (thin React hook that hydrates once on mount
+and writes through to `research-desk:v1:progress`),
+`src/state/use-item-notes.ts` (same shape, 250ms debounced writes to
+`research-desk:v1:item-notes`),
+`src/components/curriculum-filters.tsx` (chip-style filter bar, four
+dimensions — phase/track/type/state — plus an exported pure
+`applyFilters`), `src/components/curriculum-list.tsx` (phase-grouped `<ul>`
+of `<article>` rows with tristate checkbox icon — dotted parchment for
+pending, coral ▣ for inprog, Solarized green ✓ for done — line-through
+title on done, secondary `· notes` chip if the side-sheet has any
+persisted text), and `src/components/curriculum-detail-sheet.tsx`
+(right-hand `role=dialog` sheet: Phase/Track/Type chip, serif title, `id`
+in Solarized blue, focus note, canonical link with `rel="noreferrer"`,
+prerequisites as mono chips, autosaving notes textarea, state pill,
+cycle CTA whose label adapts to the next state). The Curriculum page is
+now `"use client"`, wires all of the above, and shows a 4-stat header
+(`55 TOTAL  N DONE  N IN PROGRESS  N PENDING`). Added Vitest suites for
+both new libs: 10 storage tests (round-trip, unparseable JSON, missing
+fields, future version, migration composition, migration-throws, null,
+bad type) and 14 progress-reducer tests (cycle semantics including the
+done → removed-from-map invariant, `setProgress`, `getProgress`,
+`summarize`). ARCHITECTURE.md updated with the new `item-notes` key.
+
+Observed via bundled playwright (system-Chrome remote-debug is still
+blocked by the admin policy, as in prior iterations) driving
+`pnpm exec next start -p 3100` at 1440×900 then 375×812:
+`rows rendered: 55`; clicking the first row's checkbox once flips
+`data-state` from `pending` → `inprog`; clicking again → `done`;
+`page.reload()` → first-row `data-state` still `done` (progress persisted
+to `research-desk:v1:progress`); clicking the row title opens the
+side-sheet whose `#detail-title` reads "Reinforcement Learning: An
+Introduction (Sutton & Barto) — Ch 1–6" and whose
+`[data-testid=detail-url]` href is
+`http://incompleteideas.net/book/RLbook2020.pdf`; typing `test` into
+`[data-testid=detail-notes]`, reloading, and re-opening the sheet returns
+`inputValue() === "test"` (notes persisted to
+`research-desk:v1:item-notes`); clicking `track=RLHF` in the filter bar
+drops the visible row count from 55 → 44; clicking `phase=P3` drops it to
+10 (exactly the P3 item count). Desktop screenshot shows all five phase
+sections with coral phase eyebrows, Fraunces serif subtitles, per-phase
+`n/total done` counter, a cream filter panel with coral active chips.
+Mobile screenshot at 375×812 shows the top bar, full-width stacked rows,
+filters wrapping to multiple chip lines, no horizontal scroll. Side-sheet
+screenshot shows Phase 1 · RLHF · BOOK CHAPTER chip, the full focus-note
+paragraph, the coral underlined canonical URL, the autosaving notes
+textarea, the `DONE` state pill in Solarized green, and a coral `RESET`
+footer CTA (from `done` the next cycle resets to `pending`). Screenshots
+archived under `/tmp/research-desk-shots/s074/{01..09}.png`.
+
+Quality gates: `pnpm build` succeeds (curriculum route: 14.7 kB / 120 kB
+first-load, up from the 183 B stub — every other route unchanged),
+`pnpm lint --max-warnings=0` clean, `pnpm typecheck` clean, `pnpm test`
+→ 36/36 passing in 263ms (10 storage + 14 progress + 12 curriculum data).
+Still outstanding for later iterations: SM-2 scheduler module + tests,
+≥30 flashcards data module, ≥10 papers data module + per-paper pages with
+reveal-gated answers, markdown notebook, export/import JSON UI, streak
+tracker, real dashboard widgets (current-phase / Continue / due count),
+Lighthouse report, README screenshot.
