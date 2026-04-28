@@ -323,3 +323,84 @@ outstanding for later iterations: ≥10 papers data + per-paper reveal
 pages, markdown notebook with autosave, export/import JSON UI, streak
 tracker, real dashboard widgets (current-phase / Continue / due count),
 the flip-crossfade polish, Lighthouse report, README screenshot.
+
+## 2026-04-27 · S-104 · Papers tab — 11 canonical papers, per-paper reveal-gated pages
+
+Replaced the `/papers` TabStub with the full authored surface. New
+modules: `src/data/papers.ts` (11 canonical papers — InstructGPT, PPO,
+Christiano'17, DPO, Constitutional AI, DeepSeek-R1, Let's Verify, ZeRO,
+FlashAttention v1+v2, RLAIF, plus the DeepSeekMath/GRPO paper that R1
+assumes you've read; each with authors, year, venue, real arxiv.org URL,
+a 3–5 sentence editorial why-this-matters paragraph in the voice of a
+research mentor, and 5–7 pointed comprehension questions — no "what is
+the paper about" trivia; every question tests a load-bearing detail like
+'Write the clipped surrogate objective L^CLIP from memory' or 'Show
+where the partition function Z(x) cancels in the DPO derivation'),
+`src/data/__tests__/papers.test.ts` (10 structural tests — ≥10 papers,
+unique kebab-case slugs, every URL on HOST_ALLOWLIST, canonical-10
+coverage pinned by slug, 5–7 questions each, ≥200-char summaries, no
+placeholder tokens, both tracks represented),
+`src/state/use-paper-answers.ts` (hook + exported `REVEAL_THRESHOLD=40`
+so the UI and test can't drift — autosaves to
+`research-desk:v1:paper-answers` as `Record<paperSlug, Record<qId,
+string>>` with a 250ms debounce and on-unmount flush; `canReveal(slug,
+qid)` trims whitespace before counting). Rewrote
+`app/(tabs)/papers/page.tsx` as a server component that renders 11 paper
+cards grouped by track (Primary — RLHF, Supporting — MLE-fundamentals)
+with serif titles on parchment `bg-solar-100`, year/venue chips and
+question counts in Solarized blue `text-sol-blue`, first-sentence
+excerpts of each editorial summary. New dynamic route
+`app/(tabs)/papers/[slug]/page.tsx` (server component with
+`generateStaticParams` → every paper prerendered at build time,
+`dynamicParams=false` so unknown slugs 404) delegates to a client
+`paper-reader.tsx` that shows the authors, coral canonical-URL link
+(`rel="noreferrer"` target="_blank"), the editorial summary, then 5–7
+`QuestionBlock` cards each with a persisted textarea, a live "N chars · M
+to unlock" counter, and a coral "Reveal my answer" button disabled until
+trimmed length ≥40. Revealing shows the user's OWN typed draft
+re-rendered as read-only serif prose, with explanatory microcopy ("You
+committed this answer. Now open the paper and grade yourself against
+it") — there are no canonical answer keys, matching FINAL_GOAL §3.4's
+"no LLM grading, user is trusted to self-grade" hard requirement.
+
+Tests: `pnpm test` → 91/91 passing in 256ms (added 10 new papers tests
+to the existing 81 — sm2/progress/storage/curriculum/flashcards still
+clean). `pnpm lint --max-warnings=0` and `pnpm typecheck` clean. `pnpm
+build` succeeds with 21 static pages including 11 prerendered
+`/papers/[slug]` routes (route size 2.66 kB / 112 kB first-load;
+`/papers` index is 180 B / 109 kB).
+
+Observed via bundled playwright-chromium headless (system Chrome still
+blocked by admin policy) driving `pnpm exec next start -p 3100` at
+1440×900 and 375×812:
+`GET /papers` → 200, `[data-testid=paper-card]` count = 11, slug set
+contains all ten canonical slugs from FINAL_GOAL §4 plus
+`grpo-deepseekmath`. Clicking the InstructGPT card navigates to
+`/papers/instructgpt`, `[data-testid=paper-title]` reads "Training
+language models to follow instructions with human feedback
+(InstructGPT)". Q1's reveal button starts `disabled=true` /
+`data-can-reveal=false`. Typing 30 chars into `[data-testid=answer-
+textarea]` → still disabled. Typing a 219-char paragraph → button
+enables (`disabled=false`, `data-can-reveal=true`). Clicking reveal
+renders `[data-testid=revealed-panel]` with the user's draft rendered
+as read-only serif prose + the "grade yourself against the paper"
+microcopy. After `page.reload({waitUntil:'networkidle'})` the textarea
+value equals the exact 219-char answer (persistence verified), the
+reveal button is still enabled, and `localStorage.getItem('research-
+desk:v1:paper-answers')` parses to `{version:1, data:{instructgpt:
+{'alignment-tax': '…'}}}`. Shortening the answer back to 5 chars
+re-disables the reveal button — the hook's `canReveal` is reactive,
+not a one-shot latch. Body computed style on `/papers/dpo` reports
+`{background: rgb(253,246,227), color: rgb(88,110,117)}` — the cream
+`#FDF6E3` + slate `#586E75` theme tokens are intact. Screenshots
+archived at `/tmp/research-desk-shots/s104/{01..06}.png`. All 9
+scripted assertions passed; see
+`/tmp/research-desk-shots/s104/drive.log` for the timestamped trace.
+
+Still outstanding for later iterations: Dashboard widgets (current-
+phase progress card, Continue jump, upcoming 3–5, due-flashcards CTA,
+per-phase bars, weekly streak) plus the streak-writer reducer, Notes
+markdown notebook with ≥3 pages + autosave, Export/Import JSON UI,
+`lighthouse.json` committed, README rewrite to Solarized Light +
+coral with a real UI screenshot, flashcard-flip crossfade polish,
+axe-automated a11y audit.
