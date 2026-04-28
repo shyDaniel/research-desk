@@ -6,11 +6,26 @@ Research Engineer role at a frontier lab (OpenAI / Anthropic). The primary
 track is **Post-training / RLHF**. A supporting track covers **MLE fundamentals**
 he is under-exposed to (distributed training, GPU performance, eval infra).
 
-This is not a toy. The content is the product — links, summaries, focus notes,
-flashcard answers, and paper questions must all be technically precise enough
-that a senior researcher would not scoff. The aesthetic is "research desk":
-dark, editorial, serif headings, monospace for identifiers, one sharp accent.
-Think quantitative-trading platform meets arXiv.
+**PRIME DIRECTIVE: Content is the product.** The UI exists to serve the
+content, not the other way round. A flashcard with a fuzzy answer is a
+failure. A curriculum item with a dead link is a failure. A focus note
+that reads like marketing copy is a failure. The aesthetic should be
+beautiful and 大气 — but never at the expense of content depth. When
+forced to trade off, always invest the token budget in making the
+flashcard answer more precise, the focus note more mentor-voiced, or
+the paper question harder. The UI gap between "good enough" and
+"polished" matters less than the content gap between "textbook-accurate"
+and "what a senior RE at OpenAI would say out loud."
+
+## Playwright visual verification
+
+The MCP Chrome plugin is blocked by DevTools remote debugging policy on
+this machine. Use bundled Playwright (`npx playwright test` with the
+project's Playwright config, or direct script calls using the Playwright
+npm package) instead of the `mcp__playwright__browser_*` tools for
+any screenshot or visual verification. Fallback: use `curl` + DOM text
+assertions via `pnpm start` + `node -e` script to verify rendered HTML
+structure if Playwright also fails.
 
 ## User
 
