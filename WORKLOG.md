@@ -75,3 +75,44 @@ archived under `/tmp/research-desk-shots/{desktop-1440,mobile-375}.png`.
 still 3.74 kB / 109 kB first-load. Dashboard, curriculum, flashcards,
 papers, notes, persistence, SM-2, tests, Lighthouse remain outstanding for
 later iterations — this subtask was strictly the palette rewrite.
+
+## 2026-04-27 · S-030 · Curriculum data module + URL allow-list test
+
+Authored `src/data/types.ts` (CurriculumItem interface + 36-host
+HOST_ALLOWLIST) and `src/data/curriculum.ts` (55 typed items in suggested
+reading order). Phase distribution: P1=11 foundations (Sutton & Barto,
+Spinning Up, InstructGPT, KL/importance sampling, nanoGPT), P2=13 PPO &
+reward modeling (PPO paper, GAE, Costa Huang's 37 details, Christiano'17,
+UltraFeedback, length bias, trlx/TRL, Secrets I+II, end-to-end project),
+P3=10 DPO family + CAI (DPO, IPO, KTO, SimPO, DPO-vs-PPO, CAI, RLAIF,
+self-rewarding, DPO project, Lambert's RM-still-matters post), P4=9
+reasoning RL (Let's Verify, Math-Shepherd, DeepSeekMath/GRPO, R1, OpenAI
+RBR, Open-R1, VeRL, GRPO-on-GSM8K project, PRM-vs-ORM), P5=12 end-to-end +
+MLE infra (Tülu 3, ZeRO, FSDP, FlashAttention v1+v2, Triton, GPU MODE,
+Megatron, reward-hacking survey, lm-eval-harness, AlpacaEval-LC, capstone).
+Every focusNote is a paragraph of mentor-voice direction ("derive §4 line
+by line", "if your KL flatlines at 0 the value function is broken — debug
+before tuning"), not blurb-style summary.
+
+Added `src/data/__tests__/curriculum.test.ts` (12 tests) + `vitest.config.ts`
+(node env, `@/*` → `src/*` alias). Tests assert: ≥55 items, unique ids,
+every URL matches `^https?://` with host ∈ HOST_ALLOWLIST, focusNote
+≥40 chars & no placeholder tokens, non-empty title/timeEstimate, every
+prerequisite id resolves, no cycles in the prereq DAG, phase counts
+within FINAL_GOAL §4 ranges (P1 8–12, P2 10–14, P3 8–11, P4 8–11, P5 8–12),
+and at least one RLHF item per phase. `pnpm test` → 12 passed in 230ms.
+
+Empirical link check: `curl -I -L` against all 49 unique URLs in
+`src/data/curriculum.ts` returned HTTP 200 for every one (arxiv × 28,
+github × 6, spinning-up × 3, incompleteideas × 3, interconnects × 2,
+youtube × 2, plus pytorch/triton/huggingface/rlhfbook/deeplearningbook/
+iclr-blog-track). Three URLs were caught and replaced during verification:
+the made-up `huggingface.co/blog/Costa-Huang/ppo-implementation-details`
+→ the canonical `the_n_implementation_details_of_rlhf_with_ppo`; the
+404 `www.anthropic.com/research/rule-based-rewards` → `arxiv.org/abs/
+2411.01111` (retitled to credit Mu et al. — the RBR paper is OpenAI's,
+not Anthropic's, which the prior title got wrong); and the 404
+`interconnects.ai/.../why-reward-models-still-matter` → `.../why-reward-
+models-matter`. `pnpm build` / `pnpm lint --max-warnings=0` / `pnpm
+typecheck` all clean. Curriculum tab still has no UI to render this data
+in — that's the next subtask.
