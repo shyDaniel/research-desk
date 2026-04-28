@@ -4,19 +4,21 @@
 //
 // Curriculum tab — the home page per FINAL_GOAL.md §5. Renders all 55+
 // authored items from src/data/curriculum.ts, grouped by phase, with a
-// filter bar (phase / track / type / state) and per-row tristate progress
-// checkboxes persisted to research-desk:v1:progress. Clicking a row opens
-// a side-sheet with the focus note, canonical URL, and a per-item notes
-// textarea that autosaves to research-desk:v1:item-notes.
+// filter bar (phase / track / type / state) and a per-row tristate progress
+// checkbox persisted to research-desk:v1:progress.
+//
+// Per FINAL_GOAL.md §3 Page 1 and §5, this page is sidesheet/drawer-free:
+// every piece of per-item information (focus note, canonical URL,
+// prerequisites, per-item notes, state pill, cycle CTA) renders inline on
+// the row itself. There is no modal, no overlay, no role="dialog" tied to
+// any curriculum row.
 //
 // The Export / Import JSON buttons (FINAL_GOAL.md §2) live in a quiet
 // footer at the bottom of this page — the Dashboard that used to host
 // them was deleted in S-136.
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
-import { CurriculumDetailSheet } from "@/components/curriculum-detail-sheet";
 import {
   applyFilters,
   CurriculumFilters,
@@ -27,36 +29,16 @@ import { CurriculumList } from "@/components/curriculum-list";
 import { DataExportImport } from "@/components/data-export-import";
 import { CURRICULUM } from "@/data/curriculum";
 import { getProgress, summarize } from "@/lib/progress";
+import { useCards } from "@/state/use-cards";
 import { useItemNotes } from "@/state/use-item-notes";
 import { useProgress } from "@/state/use-progress";
+import { useState } from "react";
 
 export default function CurriculumPage() {
-  return (
-    <Suspense fallback={<CurriculumShell />}>
-      <CurriculumPageInner />
-    </Suspense>
-  );
-}
-
-function CurriculumPageInner() {
   const { progress, hydrated, cycle } = useProgress();
   const { notes, setNote } = useItemNotes();
+  const { todayDue, hydrated: cardsHydrated } = useCards();
   const [filters, setFilters] = useState<CurriculumFiltersValue>(DEFAULT_FILTERS);
-  const [openId, setOpenId] = useState<string | null>(null);
-
-  // Honor the ?item=<id> deep-link (e.g. shared URL). Runs once on mount
-  // so a refresh with the same URL re-opens the sheet, and only opens if
-  // the id actually exists in the authored curriculum.
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    const requested = searchParams?.get("item");
-    if (!requested) return;
-    const exists = CURRICULUM.some((i) => i.id === requested);
-    if (exists) setOpenId(requested);
-    // Intentionally only reads on the initial search params so manual
-    // closes don't fight with the URL.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const progressFor = (id: string) => getProgress(progress, id);
 
@@ -71,10 +53,6 @@ function CurriculumPageInner() {
     [progress]
   );
 
-  const openItem = openId
-    ? CURRICULUM.find((i) => i.id === openId) ?? null
-    : null;
-
   return (
     <div className="mx-auto max-w-5xl">
       <header className="border-b border-solar-200 pb-6">
@@ -84,19 +62,28 @@ function CurriculumPageInner() {
         <h1 className="mt-3 font-serif text-4xl leading-tight text-solar-800 sm:text-5xl">
           {CURRICULUM.length} items, five phases, one path.
         </h1>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-solar-600">
-          The reading order is meaningful. Cycle the checkbox to mark an item
-          in progress or done — progress persists locally across browser
-          sessions. Click a row title to open the side-sheet with the full
-          focus note, the canonical URL, and a notebook for your thoughts on
-          that item.
+        <p
+          data-testid="curriculum-dashboard"
+          className="mt-4 font-serif text-lg leading-relaxed text-solar-700"
+        >
+          <span data-testid="dashboard-done">
+            <span className="text-coral-600">{totals.done}</span> of{" "}
+            {totals.total} done
+          </span>
+          <span className="mx-3 text-solar-400" aria-hidden>
+            ·
+          </span>
+          <span data-testid="dashboard-cards-due">
+            <span className="text-coral-600">
+              {cardsHydrated ? todayDue : 0}
+            </span>{" "}
+            cards due today
+          </span>
         </p>
-        <div className="mt-5 flex flex-wrap gap-6 text-[12px]">
-          <Stat label="Total" value={totals.total} />
-          <Stat label="Done" value={totals.done} tone="done" />
-          <Stat label="In progress" value={totals.inprog} tone="inprog" />
-          <Stat label="Pending" value={totals.pending} tone="pending" />
-        </div>
+        <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-solar-500">
+          Everything you need is on this page. Cycle the checkbox to mark an
+          item in progress or done — progress persists locally across sessions.
+        </p>
       </header>
 
       <div className="mt-6">
@@ -112,77 +99,13 @@ function CurriculumPageInner() {
         progress={progress}
         hydrated={hydrated}
         onCycle={cycle}
-        onOpen={(id) => setOpenId(id)}
-        itemNoteHas={(id) => {
-          const v = notes[id];
-          return typeof v === "string" && v.trim().length > 0;
-        }}
-      />
-
-      <CurriculumDetailSheet
-        item={openItem}
-        progress={progress}
-        noteValue={openItem ? notes[openItem.id] ?? "" : ""}
-        onNoteChange={(value) => {
-          if (openItem) setNote(openItem.id, value);
-        }}
-        onCycle={cycle}
-        onClose={() => setOpenId(null)}
+        notes={notes}
+        onNoteChange={setNote}
       />
 
       <footer className="mt-16 border-t border-solar-200 pt-10">
         <DataExportImport />
       </footer>
-    </div>
-  );
-}
-
-/** Render-on-suspend fallback — same chrome minus the interactive bits so
- *  the layout doesn't jump when the search-params promise resolves. */
-function CurriculumShell() {
-  return (
-    <div className="mx-auto max-w-5xl">
-      <header className="border-b border-solar-200 pb-6">
-        <p className="mono text-[11px] uppercase tracking-[0.28em] text-coral-500">
-          Curriculum
-        </p>
-        <h1 className="mt-3 font-serif text-4xl leading-tight text-solar-800 sm:text-5xl">
-          {CURRICULUM.length} items, five phases, one path.
-        </h1>
-      </header>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone?: "done" | "inprog" | "pending";
-}) {
-  const color =
-    tone === "done"
-      ? "#859900"
-      : tone === "inprog"
-        ? "#C1603F"
-        : tone === "pending"
-          ? "#657B83"
-          : "#586E75";
-  return (
-    <div className="flex items-baseline gap-2">
-      <span
-        className="font-serif text-xl"
-        style={{ color }}
-        data-testid={`stat-${tone ?? "total"}`}
-      >
-        {value}
-      </span>
-      <span className="mono text-[10px] uppercase tracking-[0.22em] text-solar-500">
-        {label}
-      </span>
     </div>
   );
 }

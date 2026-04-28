@@ -16,7 +16,7 @@ app/
     layout.tsx          persistent sidebar (desktop) + bottom-nav (mobile)
     _components/
       sidebar-nav.tsx   client nav with active-state + aria-current (4 tabs)
-    curriculum/page.tsx phase-grouped list + filters + side-sheet (home tab)
+    curriculum/page.tsx phase-grouped list with inline rows + filters (home tab)
     flashcards/page.tsx SM-2 deck, flip + 1/2/3/4 grade + drawer (online)
     papers/page.tsx     index of canonical papers (online)
     papers/[slug]/…     per-paper reveal-gated reader (online)

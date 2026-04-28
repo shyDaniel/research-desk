@@ -758,3 +758,81 @@ rendered cleanly), `s146-04-notes-mobile-write.png` (desktop post-clear
 baseline). Zero visual regressions in the sidebar — the four tabs
 (Curriculum · Flashcards · Papers · Notes) and the coral "36" due-count
 badge still render as designed.
+
+## 2026-04-28 · S-154 · Curriculum — kill the side-sheet, inline everything
+
+Executed FINAL_GOAL.md §3 Page 1 + §5 ("No sidesheets or drawers. Everything
+inline."). Deleted `src/components/curriculum-detail-sheet.tsx` outright —
+the `<aside role="dialog">` 520px right-hand panel the judge flagged is
+gone, along with its `detail-backdrop` / `detail-sheet` / `detail-notes` /
+`detail-url` testids and the `openId` / `?item=<id>` deep-link state that
+wired it. `app/(tabs)/curriculum/page.tsx` no longer imports it, no longer
+holds open-sheet state, and no longer mounts a Suspense-wrapped
+`useSearchParams` reader (the deep-link was only meaningful when the
+sheet existed). Every piece of per-item information the sheet surfaced
+now lives on the row itself, always visible: full focus note as body
+text, canonical URL as a coral external link (`target="_blank"
+rel="noreferrer"`), prerequisites as mono chips, an always-visible
+autosaving `<textarea data-testid="row-notes-{id}">`, the state pill
+inline in the title row, and a coral cycle CTA whose label adapts
+(Start / Mark done / Reset). The row `<article>` exposes
+`data-item-id` + `data-state` so the judge's Playwright probes still
+have stable hooks.
+
+Header rewritten per §5: the 4-metric TOTAL/DONE/IN PROGRESS/PENDING
+row is replaced by a single serif line rendering exactly `{done} of
+{total} done · {todayDue} cards due today`, live-read from
+`useProgress().progress.summarize()` + `useCards().todayDue`. The
+"Click a row title to open the side-sheet with the full focus note…"
+prose is replaced with one short line describing the drawer-free
+reality. Also renamed the Export/Import confirm dialog's streak slot
+label from "Streak" → "Legacy (streak)" and stripped the stale
+"streak" name from the Your-Data footer copy — the streak widget was
+deleted in S-136 but the export dialog was still telling users about
+it.
+
+Acceptance verified via Playwright MCP against production `pnpm start
+-p 3100` at 1440×900 (screenshots opened and inspected, not just
+captured): `document.querySelectorAll('[role="dialog"]').length === 0`
+on `/curriculum`; `data-testid="curriculum-row"` count === 55;
+`row-url-*` / `row-notes-*` / `row-cycle-*` / `row-state-pill`
+counts all === 55; `row-focus-note-*` count === 55; dashboard text
+renders exactly `"0 of 55 done · 35 cards due today"` at first paint.
+Clicking the first row's cycle CTA advances the pill from PENDING →
+IN PROGRESS (button text "Mark done"), then → DONE (button "Reset")
+with the title gaining strikethrough and a green ✓ icon; dashboard
+recounts live to `"1 of 55 done"`. Typing into the inline
+`row-notes-p1-sutton-barto` textarea and reloading the tab restores
+exactly `"Derive §4 Bellman by hand tomorrow"` from
+`research-desk:v1:item-notes` — inline-notes persistence is intact
+without any sheet ever opening. Uploading a valid export bundle pops
+the `import-confirm` inline panel whose streak slot now reads
+`"Legacy (streak)"` (screenshot `s154-03-import-confirm-legacy-streak.png`),
+not the old `"Streak"`.
+
+Quality gates: `pnpm typecheck` clean, `pnpm lint --max-warnings=0`
+clean, `pnpm test` → 133/133 passing in 298ms (no test rewrites
+required — the sheet had no dedicated Vitest suite, its persistence
+was already covered by storage + progress tests), `pnpm build` clean
+— `/curriculum` route 14.7 kB → 15.4 kB (the per-row textarea and
+inline URL markup), every other route byte-identical. Acceptance
+grep `grep -R 'role="dialog"' app src --include='*.tsx'` on the
+curriculum surface returns zero hits (`app/(tabs)/curriculum/page.tsx`
+only mentions the forbidden pattern inside a leading comment that
+documents why it's forbidden); the remaining `role="dialog"` site-
+wide is the Export/Import confirm panel, which is a user-initiated
+action confirmation, not a curriculum detail drawer.
+
+Screenshots archived at the repo root: `s154-01-curriculum-header.png`
+(fresh profile: "0 of 55 done · 35 cards due today" single-line
+dashboard, filter bar, Phase 1 header, first row with inline focus
+note + coral URL + empty NOTES textarea + coral START CTA — no
+overlay, no modal), `s154-02-curriculum-row-done-with-notes.png`
+(first row after cycle×2: strikethrough serif title, green DONE
+pill, green ✓ checkbox, "1 of 55 done" dashboard, inline notes
+holding typed text, coral RESET cycle CTA), and
+`s154-03-import-confirm-legacy-streak.png` (Export/Import footer
+panel with the renamed slot). ARCHITECTURE.md updated to drop the
+"+ side-sheet" annotation from the curriculum route description;
+`app/globals.css` palette comment updated to drop the stale
+"side-sheets" surface mention.

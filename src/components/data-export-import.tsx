@@ -30,7 +30,7 @@ const SLOT_LABEL: Record<ExportSlotName, string> = {
   cards: "Flashcard scheduler",
   paperAnswers: "Paper answers",
   notes: "Notebook",
-  streak: "Streak",
+  streak: "Legacy (streak)",
   itemNotes: "Per-item notes",
 };
 
@@ -187,9 +187,9 @@ export function DataExportImport({ onImported }: DataExportImportProps) {
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-solar-600">
         A single JSON file contains every bit of state this app owns —
-        curriculum progress, flashcard scheduler, paper answers, notebook
-        pages, streak, per-item notes. Back it up before wiping a browser
-        profile or import it into a new one to pick up where you left off.
+        curriculum progress, flashcard scheduler, paper answers, notebook,
+        per-item notes. Back it up before wiping a browser profile or import
+        it into a new one to pick up where you left off.
       </p>
 
       <div className="mt-5 flex flex-wrap items-center gap-3">

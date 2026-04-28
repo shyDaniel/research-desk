@@ -2,17 +2,24 @@
 
 // src/components/curriculum-list.tsx
 //
-// Phase-grouped list of curriculum items. Each row: a tristate checkbox
-// (pending → inprog → done), the title + type badge + time estimate, the
-// truncated focus note, and a "details" affordance that opens the side-
-// sheet. The checkbox advances state; the row body opens the sheet.
+// Phase-grouped list of curriculum items. Per FINAL_GOAL.md §3 Page 1
+// ("focus note inline — the focus note is the point, show it") and §5
+// ("No sidesheets or drawers anywhere. Everything inline."), every row
+// renders the full focus note, the canonical URL as a visible external
+// link, any prerequisites, a per-item notes textarea that autosaves, a
+// state pill, and a cycle CTA — all without a modal, drawer, or overlay.
 //
 // Rendered as <article> elements so keyboard + screen-reader users get a
-// real landmark per item. The acceptance test specifically looks for ≥ 55
-// of these as either <li> or <article>.
+// real landmark per item. The URL opens in a new tab per FINAL_GOAL §5
+// ("Links open in a new tab").
 
 import type { CurriculumItem, Phase } from "@/data/types";
-import { getProgress, type ProgressMap, type ProgressState } from "@/lib/progress";
+import {
+  getProgress,
+  nextState,
+  type ProgressMap,
+  type ProgressState,
+} from "@/lib/progress";
 
 const PHASE_META: Record<
   Phase,
@@ -50,8 +57,8 @@ interface CurriculumListProps {
   progress: ProgressMap;
   hydrated: boolean;
   onCycle: (itemId: string) => void;
-  onOpen: (itemId: string) => void;
-  itemNoteHas: (itemId: string) => boolean;
+  notes: Record<string, string>;
+  onNoteChange: (itemId: string, value: string) => void;
 }
 
 function groupByPhase(
@@ -74,8 +81,8 @@ export function CurriculumList({
   progress,
   hydrated,
   onCycle,
-  onOpen,
-  itemNoteHas,
+  notes,
+  onNoteChange,
 }: CurriculumListProps) {
   if (items.length === 0) {
     return (
@@ -120,7 +127,7 @@ export function CurriculumList({
               </span>
             </header>
 
-            <ul className="space-y-2">
+            <ul className="space-y-4">
               {groupItems.map((item) => (
                 <CurriculumRow
                   key={item.id}
@@ -128,8 +135,8 @@ export function CurriculumList({
                   state={getProgress(progress, item.id)}
                   hydrated={hydrated}
                   onCycle={onCycle}
-                  onOpen={onOpen}
-                  hasNote={itemNoteHas(item.id)}
+                  noteValue={notes[item.id] ?? ""}
+                  onNoteChange={onNoteChange}
                 />
               ))}
             </ul>
@@ -145,8 +152,8 @@ interface RowProps {
   state: ProgressState;
   hydrated: boolean;
   onCycle: (itemId: string) => void;
-  onOpen: (itemId: string) => void;
-  hasNote: boolean;
+  noteValue: string;
+  onNoteChange: (itemId: string, value: string) => void;
 }
 
 function CurriculumRow({
@@ -154,78 +161,162 @@ function CurriculumRow({
   state,
   hydrated,
   onCycle,
-  onOpen,
-  hasNote,
+  noteValue,
+  onNoteChange,
 }: RowProps) {
   const stateLabel =
     state === "done" ? "Done" : state === "inprog" ? "In progress" : "Pending";
+  const cycleLabel = (() => {
+    const n = nextState(state);
+    return n === "done" ? "Mark done" : n === "inprog" ? "Start" : "Reset";
+  })();
 
   return (
     <li>
       <article
         data-testid="curriculum-row"
+        data-item-id={item.id}
         data-state={state}
         className={
-          "group flex gap-4 rounded-sm border bg-solar-50 px-4 py-3 transition-colors " +
+          "rounded-sm border bg-solar-50 px-5 py-4 transition-colors " +
           (state === "done"
-            ? "border-solar-200 opacity-80"
+            ? "border-solar-200 opacity-90"
             : "border-solar-200 hover:border-coral-400")
         }
       >
-        <button
-          type="button"
-          data-testid={`row-checkbox-${item.id}`}
-          aria-label={`Cycle progress for ${item.title}. Current: ${stateLabel}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onCycle(item.id);
-          }}
-          className="mt-0.5 shrink-0"
-        >
-          <CheckboxIcon state={state} hydrated={hydrated} />
-        </button>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            data-testid={`row-checkbox-${item.id}`}
+            aria-label={`Cycle progress for ${item.title}. Current: ${stateLabel}`}
+            onClick={() => onCycle(item.id)}
+            className="mt-1 shrink-0"
+          >
+            <CheckboxIcon state={state} hydrated={hydrated} />
+          </button>
 
-        <button
-          type="button"
-          data-testid={`row-open-${item.id}`}
-          onClick={() => onOpen(item.id)}
-          className="min-w-0 flex-1 text-left"
-        >
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h3
-              className={
-                "font-serif text-[17px] leading-snug " +
-                (state === "done"
-                  ? "text-solar-600 line-through decoration-solar-400"
-                  : "text-solar-800")
-              }
-            >
-              {item.title}
-            </h3>
-            <span className="mono text-[10px] uppercase tracking-[0.22em] text-solar-500">
-              {item.type} · {item.timeEstimate}
-            </span>
-            {item.track === "MLE-Fundamentals" ? (
-              <span className="mono rounded-sm border border-solar-300 px-1.5 py-[1px] text-[9px] uppercase tracking-[0.22em] text-solar-600">
-                MLE
-              </span>
-            ) : null}
-            {hasNote ? (
-              <span
-                data-testid={`row-note-dot-${item.id}`}
-                className="mono text-[10px] uppercase tracking-[0.22em] text-coral-600"
-                title="Has personal notes"
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h3
+                data-testid={`row-title-${item.id}`}
+                className={
+                  "font-serif text-[18px] leading-snug " +
+                  (state === "done"
+                    ? "text-solar-600 line-through decoration-solar-400"
+                    : "text-solar-800")
+                }
               >
-                · notes
+                {item.title}
+              </h3>
+              <span className="mono text-[10px] uppercase tracking-[0.22em] text-solar-500">
+                {item.type} · {item.timeEstimate}
               </span>
-            ) : null}
+              {item.track === "MLE-Fundamentals" ? (
+                <span className="mono rounded-sm border border-solar-300 px-1.5 py-[1px] text-[9px] uppercase tracking-[0.22em] text-solar-600">
+                  MLE
+                </span>
+              ) : null}
+              <StatePill state={state} />
+            </div>
+
+            <p
+              data-testid={`row-focus-note-${item.id}`}
+              className="mt-2 text-[14px] leading-relaxed text-solar-700"
+            >
+              {item.focusNote}
+            </p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                data-testid={`row-url-${item.id}`}
+                className="mono break-all text-[12px] text-coral-600 underline decoration-coral-300 underline-offset-2 hover:decoration-coral-500"
+              >
+                {item.url}
+              </a>
+              {item.prerequisites.length > 0 ? (
+                <span className="mono inline-flex flex-wrap items-center gap-1 text-[10px] uppercase tracking-[0.22em] text-solar-500">
+                  <span>prereq</span>
+                  {item.prerequisites.map((id) => (
+                    <span
+                      key={id}
+                      className="rounded-sm border border-solar-200 bg-solar-100/60 px-1.5 py-[1px] text-[10px] tracking-normal text-solar-700"
+                    >
+                      {id}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+            </div>
+
+            <div className="mt-3 flex items-start gap-3">
+              <label
+                htmlFor={`row-notes-${item.id}`}
+                className="mono shrink-0 pt-2 text-[10px] uppercase tracking-[0.22em] text-solar-500"
+              >
+                Notes
+              </label>
+              <textarea
+                id={`row-notes-${item.id}`}
+                data-testid={`row-notes-${item.id}`}
+                value={noteValue}
+                onChange={(e) => onNoteChange(item.id, e.target.value)}
+                placeholder="What clicked, what didn't, derivations to revisit. Autosaves."
+                rows={2}
+                className="min-h-[2.5rem] w-full resize-y rounded-sm border border-solar-200 bg-solar-50 px-3 py-1.5 text-[13px] leading-relaxed text-solar-800 placeholder:text-solar-400 focus:border-coral-500 focus:outline-none"
+              />
+              <button
+                type="button"
+                data-testid={`row-cycle-${item.id}`}
+                onClick={() => onCycle(item.id)}
+                className="mono shrink-0 self-start rounded-sm border border-coral-500 bg-coral-500 px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] text-solar-50 transition-colors hover:bg-coral-600"
+              >
+                {cycleLabel}
+              </button>
+            </div>
           </div>
-          <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-solar-600">
-            {item.focusNote}
-          </p>
-        </button>
+        </div>
       </article>
     </li>
+  );
+}
+
+function StatePill({ state }: { state: ProgressState }) {
+  const map: Record<
+    ProgressState,
+    { label: string; bg: string; color: string; border: string }
+  > = {
+    pending: {
+      label: "Pending",
+      bg: "#FDF6E3",
+      color: "#657B83",
+      border: "#E4DDC8",
+    },
+    inprog: {
+      label: "In progress",
+      bg: "#FBEDE5",
+      color: "#C1603F",
+      border: "#ECB79A",
+    },
+    done: {
+      label: "Done",
+      bg: "#F0F2D7",
+      color: "#556B00",
+      border: "#C7CF86",
+    },
+  };
+  const v = map[state];
+  return (
+    <span
+      data-testid="row-state-pill"
+      data-state={state}
+      className="mono rounded-sm px-1.5 py-[1px] text-[9px] uppercase tracking-[0.22em]"
+      style={{ background: v.bg, color: v.color, border: `1px solid ${v.border}` }}
+    >
+      {v.label}
+    </span>
   );
 }
 
