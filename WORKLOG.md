@@ -471,3 +471,82 @@ with ≥3 pages + autosave, Export/Import JSON UI, `lighthouse.json`
 committed, README rewrite to Solarized Light + coral with a real UI
 screenshot, flashcard-flip crossfade polish, axe-automated a11y
 audit.
+
+## 2026-04-27 · S-122 · Notes tab — multi-page markdown notebook w/ autosave + live preview
+
+Replaced the `/notes` TabStub ("SHIPPING NEXT" + "BUILD PROGRESSES TAB
+BY TAB") with the real notebook FINAL_GOAL §3.5 names. New modules:
+`src/lib/notes.ts` (pure model — `NotePage`, `NotesState`, three frozen
+`DEFAULT_PAGES` — Notes / Scratch / Weekly log — each with authored
+seed markdown; `initialNotesState`, `normalizeNotesState` that coerces
+any payload back to a valid shape and backfills any missing default
+page so a partial localStorage blob never strands the user; `setPageBody`
+pure update returning the same object if nothing changed),
+`src/lib/markdown.tsx` (a small, safe, pure-React markdown renderer —
+ATX headings h1..h6, fenced code, blockquotes, `-`/`*` ul, `1.` ol,
+paragraphs, inline `**bold**` / `*italic*` / `` `code` `` /
+`[text](url)`; URLs scheme-filtered to http(s) so typed
+`javascript:`/`data:` never become live anchors; no
+`dangerouslySetInnerHTML` anywhere, every node is a React element),
+`src/state/use-notes.ts` (`useNotes` hook: hydrate once on mount from
+`research-desk:v1:notes`, write-through with a 250ms debounce, flush on
+unmount so the last keystroke always lands, `replace` for the future
+Import JSON flow), and `src/components/notes-editor.tsx` (the `/notes`
+surface: Fraunces header "The notebook.", coral page tab bar with
+three `data-testid=page-tab-<id>` pills, AUTOSAVE ON indicator
+switching to AUTOSAVED on first edit; desktop ≥lg shows a 2-column
+grid with a Geist-Mono textarea on `bg-solar-50` and a rendered
+preview on `bg-solar-100/60`; below lg, a pill switcher toggles a
+single column between "Write" and "Preview"). `app/(tabs)/notes/page.tsx`
+is now a thin server-boundary wrapper around `<NotesEditor />`.
+
+Tests: added `src/lib/__tests__/notes.test.ts` (7 cases — ≥3 named
+defaults, fresh-copy independence, garbage coercion, user-page
+preservation + default backfill, duplicate/malformed entry rejection,
+`setPageBody` update + no-op-on-unknown-id) and
+`src/lib/__tests__/markdown.test.ts` (15 cases — h1..h6 parsing,
+fenced code, ul/ol, paragraph cross-line accumulation, blockquote
+multi-line, **bold**/*italic*/`code`/links, `javascript:` href
+rejection, nested `**run `x`**`, refusal to promote `* spaces *` to
+italics). `pnpm test` → 133/133 passing in 303ms (+22 new: 7 notes +
+15 markdown). `pnpm lint --max-warnings=0` clean. `pnpm typecheck`
+clean (fixed `noUncheckedIndexedAccess` strict-mode cases on every
+`lines[i]` / `pages[i]` index). `pnpm build` clean — `/notes` route
+is 4.8 kB / 110 kB first-load (up from the 180 B stub), 21 static
+pages in total.
+
+Observed via bundled Playwright-chromium headless driving
+`pnpm start -p 3100` from `scripts/drive-notes.mjs` — 19/19 acceptance
+assertions pass. Desktop 1440×900: `[data-testid=notes-editor]`
+renders, `page.locator("textarea").count() === 1`,
+`[data-testid^="page-tab-"].count() === 3` with labels
+`["Notes","Scratch","Weekly log"]`. Body text contains zero instances
+of "Shipping next", "TabStub", or "build progresses tab by tab".
+Typing `"hello **world**"` into the textarea and waiting 400ms
+(> 250ms debounce) yields a live preview whose
+`[data-testid=preview-body] strong` node has textContent `"world"`.
+`localStorage.getItem("research-desk:v1:notes")` parses to
+`{version:1, data:{pages:Array(3)}}`; active page body is exactly
+`"hello **world**"`. `page.reload({waitUntil:"networkidle"})` → the
+textarea value is still `"hello **world**"` (persistence verified).
+Clicking `page-tab-scratch` swaps the textarea to the seed Scratch
+body; clicking `page-tab-weekly-log` swaps again — each page's body
+is isolated. Mobile 375×812: the `Write`/`Preview` pill switcher is
+present; clicking `mobile-pane-preview` hides the write pane and
+shows the preview; clicking back re-shows the write pane. Body
+computed style on `/notes` is `{background: rgb(253, 246, 227),
+color: rgb(88, 110, 117)}` — cream `#FDF6E3` / slate `#586E75`,
+theme tokens intact. A rich-markdown screenshot
+(`/tmp/research-desk-shots/s122/10-rich-markdown.png`) shows a typed
+paragraph with Fraunces serif heading, slate bold for `PPO`,
+Solarized-blue inline code for `r(θ)`, coral list bullets, and a
+coral-bordered blockquote — production-grade visual polish, not
+placeholder text. Screenshots archived at
+`/tmp/research-desk-shots/s122/{01-notes-initial, 02-notes-typed,
+03-weekly-log-tab, 04-mobile-preview, 05-mobile-write,
+10-rich-markdown, 11-mobile-preview-default}.png`.
+
+Still outstanding for later iterations: Export/Import JSON UI,
+`lighthouse.json` committed, README rewrite to Solarized Light +
+coral with a real UI screenshot, flashcard-flip crossfade polish,
+axe-automated a11y audit.

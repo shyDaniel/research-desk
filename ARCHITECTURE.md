@@ -19,8 +19,9 @@ app/
     dashboard/page.tsx  phase-index dashboard (online)
     curriculum/page.tsx phase-grouped list + filters + side-sheet (online)
     flashcards/page.tsx SM-2 deck, flip + 1/2/3/4 grade + drawer (online)
-    papers/page.tsx     (stub until paper pages ship)
-    notes/page.tsx      (stub until the notebook ships)
+    papers/page.tsx     index of canonical papers (online)
+    papers/[slug]/…     per-paper reveal-gated reader (online)
+    notes/page.tsx      thin wrapper around NotesEditor (online)
 src/
   data/
     curriculum.ts       ≥ 55 curated items, real URLs
@@ -29,9 +30,13 @@ src/
   lib/
     sm2.ts              SM-2 spaced-repetition scheduler (pure functions)
     progress.ts         progress reducer (pure)
+    streak.ts           streak reducer (pure)
     storage.ts          versioned localStorage wrapper + migrations
+    notes.ts            notes model: defaults, normalise, setPageBody (pure)
+    markdown.tsx        safe, small React-native markdown renderer
   components/           presentational components
-  state/                client-side hooks (useProgress, useCards, …)
+    notes-editor.tsx    multi-page notebook: tabbar + split/tabbed preview
+  state/                client-side hooks (useProgress, useCards, useNotes, …)
 ```
 
 ## Persistence — `research-desk:v1:*`
@@ -85,6 +90,32 @@ FINAL_GOAL.md §5.
 `.mcp.json` wires `playwright` and `chrome-devtools` MCP servers so the
 autopilot judge can drive the real browser and capture performance traces
 on later iterations.
+
+## Notes notebook
+
+`/notes` is a multi-page markdown notebook. Pages are plain `{id, title, body}`
+records held in `src/lib/notes.ts`; `normalizeNotesState` coerces any
+stored payload back to a valid shape and guarantees the three default
+pages (Notes / Scratch / Weekly log) are present even if the user's
+storage payload drifted. `useNotes` (in `src/state/use-notes.ts`) reads
+the persisted envelope on mount, writes through with a 250ms debounce,
+and flushes on unmount so the last keystroke always survives a tab
+close. `NotesEditor` (in `src/components/notes-editor.tsx`) renders the
+page tab bar, the textarea (Geist Mono), and the live preview
+(`renderMarkdown` from `src/lib/markdown.tsx`). Desktop (≥ lg / 1024px)
+shows the two panes side by side; below that a second row of Write /
+Preview pill buttons switches a single column between editor and
+preview so mobile stays usable at 375px.
+
+The markdown renderer is deliberately small and pure-React (no
+`dangerouslySetInnerHTML`). It covers ATX headings, fenced code,
+blockquotes, `- / *` unordered lists, `1.` ordered lists, paragraphs,
+and inline `**bold**` / `*italic*` / `` `code` `` / `[text](https://…)`.
+Link URLs are scheme-filtered to http(s) before rendering, so
+`javascript:` and `data:` payloads in typed notes never become live
+anchors. This was chosen over react-markdown + rehype-sanitize because
+the surface area is small, the dependency cost is non-trivial, and the
+XSS surface is bounded by local-only storage.
 
 ## Decisions made at bootstrap
 
