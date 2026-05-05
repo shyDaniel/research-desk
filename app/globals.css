@@ -42,8 +42,6 @@
   /* Semantic (Solarized) */
   --mono-ident: #268BD2;   /* inline code / identifiers */
   --success: #859900;       /* done state */
-  --due: #CB4B16;           /* overdue flashcards */
-  --warn: #B58900;
 }
 
 html,

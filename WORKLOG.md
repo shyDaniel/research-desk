@@ -3,6 +3,29 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-042 · Drop dead `--due` / `--warn` CSS vars (flashcards leak)
+
+Deleted `--due: #CB4B16; /* overdue flashcards */` and the also-unused
+`--warn: #B58900;` from the `:root` block in `app/globals.css`. The
+flashcards surface was removed in the S-036 era per FINAL_GOAL §3, and
+both custom properties were dead code: `grep -rn 'var(--due)\|var(--warn)'
+app src` returned 0 hits before this edit. The comment "overdue
+flashcards" was the last source-file reference to the deleted feature
+in `app/globals.css`; cousin to the iter-7 fix on `app/layout.tsx`'s
+description/keywords leak. Kept `--mono-ident` and `--success` which
+are still consumed by component styles.
+
+Verified: `grep -i flashcard app/globals.css` → 0 hits;
+`pnpm test` → 69/69 in 622 ms; `pnpm lint` → clean (max-warnings=0);
+`pnpm typecheck` → clean; `pnpm build` → green, all 13 paper detail
+pages + both curriculum routes prerender, bundle sizes unchanged
+(122 kB / 109 kB / 112 kB First Load JS).
+
+Browser MCPs (playwright/chrome-devtools) still unusable on this
+runner — `browser_navigate` reports missing chrome-for-testing system
+deps and `chrome-devtools/new_page` returns "Target closed". Visual
+verification still blocked at the runner-image level; rubric carry-over.
+
 ## 2026-05-05 · S-040 · Drop "dashboard" naming from curriculum testids
 
 Renamed `data-testid="curriculum-dashboard"` → `curriculum-progress` and
