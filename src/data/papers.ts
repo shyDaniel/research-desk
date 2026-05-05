@@ -217,7 +217,7 @@ export const PAPERS: ReadonlyArray<Paper> = [
       {
         id: "beta-role",
         prompt:
-          "What does the DPO β hyperparameter control geometrically? How does it correspond to the KL coefficient in PPO, and what happens as β→0 and β→∞?",
+          "Explain how the DPO β hyperparameter controls the geometry of the implicit reward and connect it to the KL coefficient in PPO; describe what happens as β→0 and β→∞.",
       },
       {
         id: "no-value-net",
@@ -403,7 +403,7 @@ export const PAPERS: ReadonlyArray<Paper> = [
       {
         id: "zero-stages",
         prompt:
-          "What does ZeRO-1, ZeRO-2, and ZeRO-3 each shard across data-parallel workers? Give the memory multiplier vs plain DDP at each stage.",
+          "Walk through what each of ZeRO-1, ZeRO-2, and ZeRO-3 shards across data-parallel workers, and give the per-stage memory multiplier vs plain DDP.",
       },
       {
         id: "comm-volume",

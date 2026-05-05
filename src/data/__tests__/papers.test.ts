@@ -118,6 +118,44 @@ describe("papers data", () => {
     }
   });
 
+  // FINAL_GOAL §4: never "what does X stand for". §7: every question prompt
+  // is "walk through" / "explain why" / "explain how" form. The two failure
+  // modes this test pins are:
+  //   1. The whole prompt opens with "What does …" — the canonical
+  //      definition-lookup shape §4 forbids.
+  //   2. The prompt anywhere contains the "stand for" idiom, which is the
+  //      load-bearing detail §4 calls out by name.
+  // Mid-prompt "what does X imply / tell you / buy you" follow-up clauses
+  // are explicitly NOT banned: those are colloquial framings of consequence
+  // questions ("what does this imply"), not acronym definitions.
+  it("no question prompt opens with 'What does …' or contains the 'stand for' idiom", () => {
+    const OPENS_WITH_WHAT_DOES_RE = /^\s*what\s+does\b/i;
+    const STAND_FOR_RE = /\bstand(s)?\s+for\b/i;
+    const offenders: string[] = [];
+    for (const p of PAPERS) {
+      for (const q of p.questions) {
+        const trimmed = q.prompt.trim();
+        if (OPENS_WITH_WHAT_DOES_RE.test(trimmed)) {
+          offenders.push(
+            `${p.slug}/${q.id} opens with "What does …": "${trimmed.slice(0, 80)}"`,
+          );
+          continue;
+        }
+        if (STAND_FOR_RE.test(trimmed)) {
+          offenders.push(
+            `${p.slug}/${q.id} uses "stand for" idiom: "${trimmed.slice(0, 80)}"`,
+          );
+        }
+      }
+    }
+    expect(
+      offenders,
+      `prompts violate FINAL_GOAL §4 (no "what does X stand for"):\n${offenders.join(
+        "\n",
+      )}`,
+    ).toEqual([]);
+  });
+
   it("track is RLHF or MLE-Fundamentals and at least one paper on each", () => {
     const tracks = new Set(PAPERS.map((p) => p.track));
     expect(tracks.has("RLHF")).toBe(true);

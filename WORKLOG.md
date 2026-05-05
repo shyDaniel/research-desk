@@ -3,6 +3,42 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-04 · S-010 · Paper question form — kill the two "What does …" violators
+
+Rewrote the two paper prompts that started "What does …" — the shape
+FINAL_GOAL §4 explicitly forbids ("never 'what does X stand for'") and
+§7 replaces with imperatives.
+- `dpo/beta-role`: "What does the DPO β hyperparameter control
+  geometrically? How does it correspond to the KL coefficient in PPO,
+  and what happens as β→0 and β→∞?" → "Explain how the DPO β
+  hyperparameter controls the geometry of the implicit reward and
+  connect it to the KL coefficient in PPO; describe what happens as
+  β→0 and β→∞." (load-bearing detail unchanged: β's geometric role +
+  PPO-KL correspondence + the two limit cases.)
+- `zero/zero-stages`: "What does ZeRO-1, ZeRO-2, and ZeRO-3 each shard
+  across data-parallel workers? Give the memory multiplier vs plain
+  DDP at each stage." → "Walk through what each of ZeRO-1, ZeRO-2,
+  and ZeRO-3 shards across data-parallel workers, and give the
+  per-stage memory multiplier vs plain DDP." (same load-bearing
+  detail: per-stage shard target + memory multiplier vs DDP.)
+
+Added a Vitest regression guard in `src/data/__tests__/papers.test.ts`
+that asserts (1) no prompt opens with `/^\s*what\s+does\b/i` and
+(2) no prompt anywhere contains the `\bstand(s)?\s+for\b` idiom.
+Mid-prompt "what does this imply / tell you / buy you" follow-up
+clauses are deliberately not caught — those are colloquial framings
+of consequence questions, not the acronym-definition trivia §4
+forbids.
+
+Observed: `grep -ciE '^\s*"what does' src/data/papers.ts` → 0
+(was 2). `pnpm test` → 63/63 passing in 578 ms (was 62, +1 for the
+new prompt-shape guard). `pnpm lint --max-warnings=0` clean,
+`pnpm typecheck` clean, `pnpm build` clean — `/[track]/papers/[slug]`
+route unchanged at 2.65 kB / 112 kB first-load, 11 paper pages still
+prerendered, both rewritten prompts visible at
+`/rlhf/papers/dpo` and `/mle/papers/zero` via the existing
+`paper-reader.tsx` render path.
+
 ## 2026-05-04 · S-001 · Curriculum focus notes — Self-check tails on all 55
 
 Appended a one-sentence "Self-check: …" retrieval question to every entry
