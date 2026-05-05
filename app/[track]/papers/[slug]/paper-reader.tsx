@@ -19,19 +19,17 @@ import Link from "next/link";
 import { useState } from "react";
 
 import type { Paper, PaperQuestion } from "@/data/papers";
-import {
-  REVEAL_THRESHOLD,
-  usePaperAnswers,
-} from "@/state/use-paper-answers";
+import type { TrackSlug } from "@/lib/track";
+import { REVEAL_THRESHOLD, usePaperAnswers } from "@/state/use-paper-answers";
 
-export function PaperReader({ paper }: { paper: Paper }) {
+export function PaperReader({ paper, trackSlug }: { paper: Paper; trackSlug: TrackSlug }) {
   const { getAnswer, canReveal, setAnswer, hydrated } = usePaperAnswers();
 
   return (
     <article className="mx-auto max-w-3xl" data-testid="paper-reader" data-slug={paper.slug}>
       <p className="mono text-[11px] uppercase tracking-[0.28em] text-coral-500">
         <Link
-          href="/papers"
+          href={`/${trackSlug}/papers`}
           className="hover:text-coral-600"
           data-testid="back-to-papers"
         >
