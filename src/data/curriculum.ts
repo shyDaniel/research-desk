@@ -98,7 +98,7 @@ export const CURRICULUM: ReadonlyArray<CurriculumItem> = [
     title: "Deep Learning Book — Ch 6 (Deep Feedforward Networks)",
     type: "Book chapter",
     phase: 1,
-    track: "MLE-Fundamentals",
+    track: "RLHF",
     url: "https://www.deeplearningbook.org/contents/mlp.html",
     timeEstimate: "~3h",
     focusNote:
@@ -134,7 +134,7 @@ export const CURRICULUM: ReadonlyArray<CurriculumItem> = [
     title: "Karpathy — Let's build GPT: from scratch (video + nanoGPT)",
     type: "Video",
     phase: 1,
-    track: "MLE-Fundamentals",
+    track: "RLHF",
     url: "https://www.youtube.com/watch?v=kCc8FmEb1nY",
     timeEstimate: "~2h",
     focusNote:
@@ -146,7 +146,7 @@ export const CURRICULUM: ReadonlyArray<CurriculumItem> = [
     title: "Karpathy — nanoGPT (code)",
     type: "Code project",
     phase: 1,
-    track: "MLE-Fundamentals",
+    track: "RLHF",
     url: "https://github.com/karpathy/nanoGPT",
     timeEstimate: "~2h reading + 1h tinkering",
     focusNote:

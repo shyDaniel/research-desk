@@ -13,7 +13,7 @@
 // real landmark per item. The URL opens in a new tab per FINAL_GOAL §5
 // ("Links open in a new tab").
 
-import type { CurriculumItem, Phase } from "@/data/types";
+import type { CurriculumItem, Phase, Track } from "@/data/types";
 import {
   getProgress,
   nextState,
@@ -21,14 +21,13 @@ import {
   type ProgressState,
 } from "@/lib/progress";
 
-const PHASE_META: Record<
-  Phase,
-  { label: string; subtitle: string }
-> = {
+type PhaseMeta = { label: string; subtitle: string };
+
+const RLHF_PHASE_META: Record<Phase, PhaseMeta> = {
   1: {
     label: "Phase 1 — Foundations",
     subtitle:
-      "RL fundamentals, policy gradients, KL divergence, importance sampling. Before any RLHF paper.",
+      "RL fundamentals, policy gradients, KL divergence, importance sampling, LM internals. Before any RLHF paper.",
   },
   2: {
     label: "Phase 2 — PPO & Reward Modeling",
@@ -46,14 +45,31 @@ const PHASE_META: Record<
       "PRMs vs ORMs, DeepSeek-R1, GRPO, rule-based verifiable rewards. The 2024–25 reasoning shift.",
   },
   5: {
-    label: "Phase 5 — Specialization & MLE infra",
+    label: "Phase 5 — Specialization & end-to-end",
     subtitle:
-      "Tülu 3, ZeRO/FSDP, FlashAttention, eval harnesses, reward hacking. The stack that actually ships models.",
+      "Tülu 3, eval harnesses, reward hacking, RLHF for safety. The stack that actually ships models.",
   },
 };
 
+const MLE_PHASE_META: Record<Phase, PhaseMeta> = {
+  1: { label: "", subtitle: "" },
+  2: { label: "", subtitle: "" },
+  3: { label: "", subtitle: "" },
+  4: { label: "", subtitle: "" },
+  5: {
+    label: "MLE Fundamentals",
+    subtitle:
+      "Distributed training, GPU kernels, and eval infra — the small set an RE must know to read RLHF work critically.",
+  },
+};
+
+function phaseMetaFor(track: Track, phase: Phase): PhaseMeta {
+  return track === "RLHF" ? RLHF_PHASE_META[phase] : MLE_PHASE_META[phase];
+}
+
 interface CurriculumListProps {
   items: ReadonlyArray<CurriculumItem>;
+  track: Track;
   progress: ProgressMap;
   hydrated: boolean;
   onCycle: (itemId: string) => void;
@@ -78,6 +94,7 @@ function groupByPhase(
 
 export function CurriculumList({
   items,
+  track,
   progress,
   hydrated,
   onCycle,
@@ -102,7 +119,7 @@ export function CurriculumList({
   return (
     <div className="mt-6 space-y-10">
       {groups.map(({ phase, items: groupItems }) => {
-        const meta = PHASE_META[phase];
+        const meta = phaseMetaFor(track, phase);
         const doneCount = groupItems.filter(
           (it) => getProgress(progress, it.id) === "done"
         ).length;
@@ -110,15 +127,23 @@ export function CurriculumList({
           <section key={phase} aria-labelledby={`phase-${phase}-heading`}>
             <header className="mb-4 flex items-end justify-between gap-4 border-b border-solar-200 pb-3">
               <div>
-                <p className="mono text-[10px] uppercase tracking-[0.28em] text-coral-500">
-                  {meta.label}
-                </p>
-                <h2
-                  id={`phase-${phase}-heading`}
-                  className="mt-1 font-serif text-2xl leading-tight text-solar-800"
-                >
-                  {meta.subtitle}
-                </h2>
+                {meta.label ? (
+                  <p className="mono text-[10px] uppercase tracking-[0.28em] text-coral-500">
+                    {meta.label}
+                  </p>
+                ) : null}
+                {meta.subtitle ? (
+                  <h2
+                    id={`phase-${phase}-heading`}
+                    className="mt-1 font-serif text-2xl leading-tight text-solar-800"
+                  >
+                    {meta.subtitle}
+                  </h2>
+                ) : (
+                  <h2 id={`phase-${phase}-heading`} className="sr-only">
+                    Items
+                  </h2>
+                )}
               </div>
               <span className="mono shrink-0 text-[11px] text-solar-600">
                 <span className="text-coral-600">{doneCount}</span>

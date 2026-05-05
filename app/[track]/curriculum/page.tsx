@@ -52,6 +52,7 @@ export default function CurriculumPage({ params }: CurriculumPageProps) {
 
       <CurriculumList
         items={items}
+        track={track}
         progress={progress}
         hydrated={hydrated}
         onCycle={cycle}
