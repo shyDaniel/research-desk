@@ -3,6 +3,27 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-04 · S-001 · Curriculum focus notes — Self-check tails on all 55
+
+Appended a one-sentence "Self-check: …" retrieval question to every entry
+in `src/data/curriculum.ts`, as FINAL_GOAL.md §4 mandates. Each Self-check
+is concrete and item-keyed (e.g. p1-sutton-barto-pg → "state the policy-
+gradient theorem with a state-dependent baseline in one breath"; p2-ppo-
+paper → write L^CLIP and explain the KL-penalty preference; p4-deepseekmath-
+grpo → write the group-relative advantage formula and quantify the GPU
+savings). No "understand X" generics. The two notes that were under the
+§4 200-char floor (p2-rm-calibration 199, p3-rlaif-paper 184) cleared it
+naturally as the Self-check sentences arrived. Raised the curriculum
+Vitest invariant from `≥ 40 chars` to `≥ 200 chars` and added a separate
+assertion that every focusNote ends with `Self-check: <≥25-char question>`.
+Updated the file-header invariant comment block to match.
+
+Observed: `pnpm lint` clean, `pnpm typecheck` clean, `pnpm test` 62/62
+passing (was 61, +1 for the new Self-check assertion), `pnpm build`
+green (16.3 kB curriculum route, 122 kB first-load JS). Started
+`pnpm start` on :4747 and `curl /rlhf/curriculum | grep Self-check`
+returns the rendered Self-check sentences inline on the page (HTTP 200).
+
 ## 2026-04-27 · S-001 · Bootstrap scaffold
 
 Scaffolded a clean Next.js 15 App Router + TypeScript strict + Tailwind v3

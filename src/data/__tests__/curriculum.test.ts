@@ -42,14 +42,35 @@ describe("curriculum data", () => {
     }
   });
 
-  it("every focusNote is a real mentor-voice paragraph (≥ 40 chars)", () => {
+  it("every focusNote is a real mentor-voice paragraph (≥ 200 chars)", () => {
+    // FINAL_GOAL.md §4: focusNote is required, ≥ 200 characters, 4–8 sentences
+    // in mentor voice. The 40-char floor predated the polish bar — raise it.
     for (const item of CURRICULUM) {
       expect(
         item.focusNote.trim().length,
         `${item.id} focusNote too short`,
-      ).toBeGreaterThanOrEqual(40);
+      ).toBeGreaterThanOrEqual(200);
       // Reject obvious placeholder text.
       expect(item.focusNote.toLowerCase()).not.toMatch(/lorem|todo|fixme|xxx/);
+    }
+  });
+
+  it("every focusNote ends with a concrete Self-check sentence", () => {
+    // FINAL_GOAL.md §4: "end with a one-sentence self-check ('Self-check: …')".
+    // The retrieval question after the marker must be at least 25 characters
+    // — generic 'understand X' lines are a §4.2 polish failure.
+    for (const item of CURRICULUM) {
+      const note = item.focusNote.trim();
+      const match = note.match(/Self-check:\s*(\S.*)$/);
+      expect(
+        match,
+        `${item.id} focusNote missing 'Self-check: …' tail`,
+      ).not.toBeNull();
+      const question = (match?.[1] ?? "").trim();
+      expect(
+        question.length,
+        `${item.id} Self-check question too short (${question.length} chars)`,
+      ).toBeGreaterThanOrEqual(25);
     }
   });
 
