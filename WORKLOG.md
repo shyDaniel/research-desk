@@ -3,6 +3,36 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-029 · Rewrite ARCHITECTURE.md to match the real source tree
+
+Replaced the stale ARCHITECTURE.md that opened with a "STALE — do not
+trust" banner and described the deleted `(tabs)/{flashcards,notes,
+curriculum,papers}` route group, `src/lib/sm2.ts` SM-2 scheduler,
+multi-page NotesEditor, the Export/Import JSON bundle with its
+`buildExportBundle` / `EXPORT_SLOT_NAMES` surface, the legacy `cards`
+and `streak` storage slots, and the four-entry sidebar — all of which
+were removed in S-136 / S-146 / the track-split refactor. The new
+document maps the actual current shape: route tree under
+`app/[track]/{curriculum,papers,papers/[slug]}` with `app/page.tsx`
+as a server `redirect("/rlhf/curriculum")`; the `parseTrackSlug →
+slugToTrack → TRACK_META` pipeline in `src/lib/track.ts`; the THREE
+v1 storage keys (`progress` / `paper-answers` / `item-notes`) with
+their TS shapes and the SSR-safe envelope wrapper; `src/data/{types,
+curriculum,papers}.ts` and the structural Vitest invariants in
+`src/data/__tests__/` (URL allow-list, focus-note ≥ 200 chars +
+`Self-check:` tail, paper question shape guard banning the "What
+does …" / "stand for" idiom, per-phase count envelope); the markdown
+renderer's http(s)-only scheme allow-list; the static-deploy story
+on port 4747 with no server routes; and the four `src/lib/__tests__/`
+suites including the `track.test.ts` casing guard. Stale banner gone.
+
+Acceptance: `grep -iE 'flashcard|sm-?2|sm2.ts|notes editor|four tabs|
+four-tab|dashboard tab|export bundle|cards storage|streak slot|stale'
+ARCHITECTURE.md` → 0 hits. Every route and file path referenced in the
+new document exists in the tree (verified file-by-file: 28/28 OK).
+`pnpm lint` clean, `pnpm typecheck` clean, `pnpm test` 69/69 green
+in 462 ms.
+
 ## 2026-05-05 · S-024 · Rewrite README to describe the real product
 
 Replaced the stale README that still led with "README is stale
