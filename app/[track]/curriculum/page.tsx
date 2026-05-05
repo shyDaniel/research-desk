@@ -37,10 +37,10 @@ export default function CurriculumPage({ params }: CurriculumPageProps) {
           {items.length} items, {meta.tagline.charAt(0).toLowerCase() + meta.tagline.slice(1)}
         </h1>
         <p
-          data-testid="curriculum-dashboard"
+          data-testid="curriculum-progress"
           className="mt-4 font-serif text-lg leading-relaxed text-solar-700"
         >
-          <span data-testid="dashboard-done">
+          <span data-testid="progress-done">
             <span className="text-coral-600">{totals.done}</span> of {totals.total} done
           </span>
         </p>

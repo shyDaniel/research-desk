@@ -65,8 +65,8 @@ export function nextState(s: ProgressState): ProgressState {
 }
 
 /**
- * Aggregate counts for a set of item ids. Used by the dashboard and the
- * curriculum filter bar. Missing ids count as `pending`.
+ * Aggregate counts for a set of item ids. Used by the curriculum progress
+ * header and the curriculum filter bar. Missing ids count as `pending`.
  */
 export function summarize(
   map: ProgressMap,

@@ -3,6 +3,24 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-040 · Drop "dashboard" naming from curriculum testids
+
+Renamed `data-testid="curriculum-dashboard"` → `curriculum-progress` and
+`data-testid="dashboard-done"` → `progress-done` in
+`app/[track]/curriculum/page.tsx`, plus the lone "Used by the dashboard"
+JSDoc in `src/lib/progress.ts:67-69` (now "the curriculum progress
+header"). FINAL_GOAL §3 forbids a Dashboard surface; the testid was a
+naming smell that could seed a future regression. Visible UI unchanged.
+
+Verified end-to-end against `pnpm start -p 4747`:
+`grep -niR dashboard app/ src/` → 0 hits;
+`curl -s /rlhf/curriculum | grep -ic dashboard` → 0;
+`curl -s /mle/curriculum | grep -ic dashboard` → 0;
+both routes contain the new `curriculum-progress` / `progress-done`
+testids in rendered HTML. Floor: `pnpm test` 69/69, `pnpm lint` clean,
+`pnpm typecheck` clean, `pnpm build` clean (all 13 paper detail pages
++ both curriculum routes prerender; bundle sizes unchanged).
+
 ## 2026-05-05 · S-031 · Drop stale S-154 screenshots + the rogue `E` file
 
 Deleted `s154-01-curriculum-header.png` and
