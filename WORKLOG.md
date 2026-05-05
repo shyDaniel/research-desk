@@ -3,6 +3,33 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-031 · Drop stale S-154 screenshots + the rogue `E` file
+
+Deleted `s154-01-curriculum-header.png` and
+`s154-02-curriculum-row-done-with-notes.png` from the repo root. Both
+PNGs documented the pre-track-split S-154 layout: a four-entry sidebar
+(Curriculum / Flashcards / Papers / Notes), the "35 cards due today"
+counter, the "55 items, five phases, one path" header, the
+filter bar, and the inline NOTES textarea — none of which exist in the
+current product. Curriculum is now `/[track]/curriculum`, the sidebar
+has two entries (Curriculum, Papers), there is no flashcard counter,
+no per-row notes textarea on the curriculum row, and the filter bar
+is gone. The PNGs are misleading documentation, so deletion (not
+archival) is the right move — the S-154 WORKLOG entry above already
+describes the layout in prose with enough detail that an archaeologist
+can reconstruct it from `git show 28e8a1f^` if ever needed. Also
+removed the 165 KB untracked `E` file (HTML scratch document, no
+provenance, not referenced by anything in the tree, has polluted
+`git status --porcelain` for five iterations).
+
+Acceptance: `git ls-files '*.png' | grep -v '^docs/'` returns nothing;
+`git status --porcelain | grep -E '^\?\? E$'` returns nothing. The
+S-154 prose in this WORKLOG still resolves to a date+subtask anchor;
+the now-deleted file references inside that entry remain accurate as
+historical pointers ("screenshots archived at the repo root" — they
+were, until S-031 dropped them as the UI they captured no longer
+exists).
+
 ## 2026-05-05 · S-029 · Rewrite ARCHITECTURE.md to match the real source tree
 
 Replaced the stale ARCHITECTURE.md that opened with a "STALE — do not
