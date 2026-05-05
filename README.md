@@ -46,14 +46,14 @@ All five tabs are shipped and production-ready:
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:3000
+pnpm dev          # http://localhost:4747
 ```
 
 ## Build & run locally
 
 ```bash
 pnpm build
-pnpm start        # production server on :3000
+pnpm start        # production server on :4747
 ```
 
 ## Quality gates
@@ -74,12 +74,12 @@ To regenerate:
 
 ```bash
 pnpm build
-pnpm start -p 3100 &      # serve the production build on :3100
+pnpm start &              # serve the production build on :4747
 pnpm lighthouse           # writes lighthouse.json at repo root
 ```
 
 The `lighthouse` script runs headless Chrome against
-`http://localhost:3100/` and emits the four category scores to
+`http://localhost:4747/` and emits the four category scores to
 `./lighthouse.json`.
 
 ## Deploy
@@ -112,7 +112,7 @@ Next.js). The app is deployable from the repo root as-is.
 
 ### Local tarball / file://
 
-`pnpm build && pnpm start` serves on `:3000` with HTTP 200 on every
+`pnpm build && pnpm start` serves on `:4747` with HTTP 200 on every
 route. Because every route is prerendered (`○ (Static)` or `● (SSG)`
 in the build output), you can also point any static server
 (`python -m http.server`, `npx serve`) at `.next/server/app` after

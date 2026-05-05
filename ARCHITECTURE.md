@@ -171,12 +171,12 @@ individually, and matches what a power user expects from
 ## Lighthouse
 
 `lighthouse.json` at the repo root is a committed audit of
-`http://localhost:3100/` (the production `pnpm start` server) across
+`http://localhost:4747/` (the production `pnpm start` server) across
 four categories: performance, accessibility, best-practices, SEO. All
 four scores are ≥ 0.95 as required by FINAL_GOAL §1. Regenerate by
-running `pnpm build && pnpm start -p 3100 &` and then `pnpm
+running `pnpm build && pnpm start &` and then `pnpm
 lighthouse` — the `lighthouse` script (in `package.json`) invokes
-`lighthouse` against `:3100/` with `--only-categories=performance,
+`lighthouse` against `:4747/` with `--only-categories=performance,
 accessibility,best-practices,seo` and writes the report to
 `./lighthouse.json`. A headless Chrome launch is used so the audit
 runs without a desktop; on macOS the script picks up

@@ -10,7 +10,7 @@ mkdirSync(SHOT_DIR, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
-await page.goto("http://localhost:3100/notes", { waitUntil: "networkidle" });
+await page.goto("http://localhost:4747/notes", { waitUntil: "networkidle" });
 await page.waitForSelector('[data-testid="notes-editor"]');
 
 const ta = page.locator('[data-testid="notes-textarea"]');
@@ -23,7 +23,7 @@ await page.screenshot({ path: `${SHOT_DIR}/10-rich-markdown.png`, fullPage: true
 // Mobile preview
 const m = await browser.newContext({ viewport: { width: 375, height: 812 } });
 const mp = await m.newPage();
-await mp.goto("http://localhost:3100/notes", { waitUntil: "networkidle" });
+await mp.goto("http://localhost:4747/notes", { waitUntil: "networkidle" });
 await mp.waitForSelector('[data-testid="notes-editor"]');
 await mp.click('[data-testid="mobile-pane-preview"]');
 await mp.waitForTimeout(200);

@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-const BASE = 'http://localhost:3100';
+const BASE = 'http://localhost:4747';
 const OUT = '/tmp/research-desk-judge';
 
 async function main() {

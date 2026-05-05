@@ -18,7 +18,7 @@ try {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
 
-  await page.goto("http://localhost:3100/notes", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:4747/notes", { waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="notes-editor"]', { timeout: 5000 });
 
   // Acceptance checkpoints
@@ -120,7 +120,7 @@ try {
   // Mobile run — confirm tabbed switcher
   const mctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
   const m = await mctx.newPage();
-  await m.goto("http://localhost:3100/notes", { waitUntil: "networkidle" });
+  await m.goto("http://localhost:4747/notes", { waitUntil: "networkidle" });
   await m.waitForSelector('[data-testid="notes-editor"]');
 
   const mobileWriteBtn = m.locator('[data-testid="mobile-pane-write"]');

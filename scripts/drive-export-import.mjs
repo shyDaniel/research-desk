@@ -17,7 +17,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-const BASE = "http://localhost:3100";
+const BASE = "http://localhost:4747";
 const SHOT_DIR = "/tmp/research-desk-shots/s126";
 mkdirSync(SHOT_DIR, { recursive: true });
 const TMP = mkdirSync(path.join(os.tmpdir(), "rd-export-test"), {

@@ -8,7 +8,7 @@ const browser = await chromium.launch({ headless: true });
 try {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
-  await page.goto("http://localhost:3100/dashboard", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:4747/dashboard", { waitUntil: "networkidle" });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="data-export-import"]');

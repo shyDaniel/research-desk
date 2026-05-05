@@ -4,13 +4,13 @@
   "private": true,
   "description": "Research Desk — a personal learning OS for transitioning to RLHF / frontier-lab research engineering.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 4747",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4747",
     "lint": "next lint --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lighthouse": "lighthouse http://localhost:3100/ --output=json --output-path=./lighthouse.json --only-categories=performance,accessibility,best-practices,seo --chrome-flags=\"--headless=new --no-sandbox\" --quiet"
+    "lighthouse": "lighthouse http://localhost:4747/ --output=json --output-path=./lighthouse.json --only-categories=performance,accessibility,best-practices,seo --chrome-flags=\"--headless=new --no-sandbox\" --quiet"
   },
   "dependencies": {
     "next": "15.1.6",
