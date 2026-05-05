@@ -55,6 +55,22 @@ describe("curriculum data", () => {
     }
   });
 
+  it("every focusNote contains a concrete pointer (FINAL_GOAL §4 polish round 2)", () => {
+    // Mentor prose cites the actual section / equation / figure / file the
+    // reader should open. Generic abstract-paraphrase notes get filtered here.
+    // Acceptable concrete pointers: §, Ch N, Chapter N, Eq N, Equation N,
+    // Figure N, Table N, Algorithm N, Appendix X, Section N, line N, page N,
+    // OR a real source filename ending .py/.ts/.cu/.cpp/.h/.md/.ipynb,
+    // OR a function call form like `train_step()`.
+    const POINTER =
+      /(§\s*\d|\bCh(?:apter)?\s+\d|\bEq(?:uation|s)?\.?\s*\d|\bFig(?:ure|s)?\.?\s*\d|\bTable\s+\d|\bAlgorithm\s+\d|\bAppendix\s+[A-Z\d]|\bSection\s+\d|\bline\s+\d|\bpage\s+\d|\b[a-zA-Z_][\w-]*\.(?:py|ts|tsx|cu|cuh|cpp|c|h|md|ipynb|json|yaml|yml)\b|\b[a-z_][a-z_0-9]+\([^)]{0,40}\))/i;
+    const missing = CURRICULUM.filter((item) => !POINTER.test(item.focusNote)).map((i) => i.id);
+    expect(
+      missing,
+      `${missing.length} focusNotes missing a concrete pointer (§/Ch/Eq/Fig/Table/Alg/Appendix/Section/line/page, filename, or fn-call). Add one to each — generic prose without a citation is a polish failure.`,
+    ).toEqual([]);
+  });
+
   it("every focusNote ends with a concrete Self-check sentence", () => {
     // FINAL_GOAL.md §4: "end with a one-sentence self-check ('Self-check: …')".
     // The retrieval question after the marker must be at least 25 characters

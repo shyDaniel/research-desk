@@ -84,9 +84,10 @@ Every curriculum row is one section of an opinionated mentor book.
 - **`focusNote` (required, ≥ 200 characters):** 4–8 sentences. Written as if
   Hanyu is sitting next to you and asked "what should I actually look for in
   this?" Lead with one sentence on why this item exists in the path, then 2–4
-  sentences on the load-bearing idea (cite the section, equation, or
-  filename), then end with a one-sentence self-check ("Self-check: …").
-  No marketing prose, no abstract paraphrase, no "let's explore" framing.
+  sentences on the load-bearing idea (**cite the actual section, equation,
+  figure, table, algorithm, appendix, line, or filename — this is enforced**),
+  then end with a one-sentence self-check ("Self-check: …"). No marketing
+  prose, no abstract paraphrase, no "let's explore" framing.
 - A real URL on the host allow-list (no placeholder domains).
 - A time estimate.
 - Prerequisite IDs that resolve to other items.
@@ -115,9 +116,11 @@ URL allow-list test must pass.
 #### Papers
 
 Every paper has a `summary` of 3–6 sentences in the same opinionated voice
-plus 5–7 questions of the form "walk through X" / "explain why Y" — never
-"what does X stand for". The reader page renders summary on top, questions
-below; each question has a textarea and a Reveal button gated to ≥ 40 chars.
+that **cites at least one concrete section / equation / figure / table /
+algorithm / appendix / filename** (enforced by `papers.test.ts`) plus 5–7
+questions of the form "walk through X" / "explain why Y" — never "what does
+X stand for". The reader page renders summary on top, questions below; each
+question has a textarea and a Reveal button gated to ≥ 40 chars.
 
 - RLHF papers: ≥ 8.
 - MLE Fundamentals papers: ≥ 2 (canonical: ZeRO, FlashAttention).
@@ -140,9 +143,33 @@ Autopilot's worker should treat content as a multi-pass effort:
    year, wrong phrase for a method), fix it and add a reference link in the
    prose if it helps.
 
-The eval skill should keep returning polish blockers until every focus note
-and every paper summary survives an "is this what a senior RE would say?"
-read.
+##### Polish round 2 — explicit punchlist (current state)
+
+The previous polish round shipped, but the bar has been raised. Two new
+test gates fail at the moment and are the **explicit current outstanding
+work** for autopilot:
+
+- `curriculum.test.ts > every focusNote contains a concrete pointer` —
+  fails for ≈ 33 items whose focus notes lack a section / equation /
+  figure / table / algorithm / appendix / filename / function-call
+  pointer. Each missing item must be polished to add the actual citation
+  the reader would open. No template padding ("see §2 of the paper") —
+  cite the *load-bearing* section that carries the claim being made in the
+  prose.
+- `papers.test.ts > every summary cites at least one concrete pointer` —
+  fails for ≈ 7 paper summaries (christiano-2017, deepseek-r1, dpo,
+  flashattention, lets-verify, rlaif, zero) for the same reason.
+
+Worker workflow: open the failing item, read 3–5 minutes of the canonical
+source (paper PDF / book chapter / repo README), pick the **one** section
+or equation that carries the load, and rewrite the focus note around it.
+Test then passes for that item; commit; repeat.
+
+The eval skill should keep returning polish blockers — and the worker
+should keep raising the bar (depth, accuracy, citation density, internal
+cross-references) — until every focus note and every paper summary
+survives an "is this what a senior RE would say to a junior RE in 90
+seconds?" read.
 
 ### 5. Visual design
 

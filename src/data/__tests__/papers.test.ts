@@ -82,6 +82,19 @@ describe("papers data", () => {
     }
   });
 
+  it("every summary cites at least one concrete pointer (FINAL_GOAL §4 polish round 2)", () => {
+    // Editorial summaries must point the reader at a real section / equation /
+    // figure / table / appendix or a real filename — generic 'this paper
+    // shows X' prose is a polish failure. Same regex as the curriculum check.
+    const POINTER =
+      /(§\s*\d|\bCh(?:apter)?\s+\d|\bEq(?:uation|s)?\.?\s*\d|\bFig(?:ure|s)?\.?\s*\d|\bTable\s+\d|\bAlgorithm\s+\d|\bAppendix\s+[A-Z\d]|\bSection\s+\d|\bline\s+\d|\bpage\s+\d|\b[a-zA-Z_][\w-]*\.(?:py|ts|tsx|cu|cuh|cpp|c|h|md|ipynb|json|yaml|yml)\b)/i;
+    const missing = PAPERS.filter((p) => !POINTER.test(p.summary)).map((p) => p.slug);
+    expect(
+      missing,
+      `${missing.length} paper summaries missing a concrete pointer. Cite the actual section / equation / figure that carries the paper's load-bearing claim.`,
+    ).toEqual([]);
+  });
+
   it("every paper has between 5 and 7 questions inclusive", () => {
     for (const p of PAPERS) {
       expect(
