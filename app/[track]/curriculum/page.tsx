@@ -34,7 +34,7 @@ export default function CurriculumPage({ params }: CurriculumPageProps) {
           {meta.label} · Curriculum
         </p>
         <h1 className="mt-3 font-serif text-4xl leading-tight text-solar-800 sm:text-5xl">
-          {items.length} items, {meta.tagline.toLowerCase().replace(/\.$/, "")}.
+          {items.length} items, {meta.tagline.charAt(0).toLowerCase() + meta.tagline.slice(1)}
         </h1>
         <p
           data-testid="curriculum-dashboard"

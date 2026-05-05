@@ -3,6 +3,38 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-017 · Stop lowercasing acronyms (RL, GPU) in curriculum H1
+
+`app/[track]/curriculum/page.tsx:37` was rendering
+`{meta.tagline.toLowerCase().replace(/\.$/, "")}.` so the H1 read
+"44 items, post-training, preference optimization, reasoning rl." and
+"11 items, distributed training and gpu systems you must know." The
+nuke-the-whole-string `.toLowerCase()` call was the bug: it lowercased
+the first character of the tagline (which is what the prose flow
+wants — "N items, post-training…") AND every internal acronym. Swapped
+to `meta.tagline.charAt(0).toLowerCase() + meta.tagline.slice(1)`,
+which only down-cases the leading letter and renders the rest of the
+string verbatim from `TRACK_META`. The trailing period now comes from
+the tagline itself instead of being re-appended in JSX, so there's no
+double-period either.
+
+Verified live by curl against `pnpm start` on :4747:
+- `/rlhf/curriculum` H1: `'44 items, post-training, preference optimization, reasoning RL.'`
+- `/mle/curriculum`  H1: `'11 items, distributed training and GPU systems you must know.'`
+- `grep -c 'reasoning RL\.' rlhf.html` → 1
+- `grep -c 'GPU systems'    mle.html`  → 1
+
+Added `src/lib/__tests__/track.test.ts` (6 tests) — asserts the
+TRACK_META taglines literally contain "RL" and "GPU" (and lack
+the lowercase forms), and round-trips parseTrackSlug /
+slugToTrack / trackToSlug. This is a data-layer regression guard:
+even if some future page renderer reaches for `.toLowerCase()`
+again, the data contract makes the intended casing explicit.
+
+`pnpm lint` clean, `pnpm typecheck` clean, `pnpm test` 69/69
+green (was 63, +6 from the new track test file), `pnpm build`
+green.
+
 ## 2026-05-04 · S-010 · Paper question form — kill the two "What does …" violators
 
 Rewrote the two paper prompts that started "What does …" — the shape
