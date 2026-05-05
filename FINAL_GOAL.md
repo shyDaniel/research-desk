@@ -1,22 +1,31 @@
 # FINAL_GOAL.md — Research Desk
 
-A personal study tool for Hanyu as he transitions from traditional MLE
-to a Research Engineer role at a frontier lab. Primary track: Post-training
-/ RLHF. Supporting track: MLE fundamentals he hasn't touched in prod
-(distributed training, GPU perf, eval infra).
+A personal study tool for Hanyu as he transitions from traditional MLE to a
+Research Engineer role at a frontier lab. Two parallel tracks, picked once at
+the top of the app:
+
+- **RLHF** — post-training, preference optimization, reasoning RL. The path
+  from InstructGPT through DeepSeek-R1.
+- **MLE Fundamentals** — the small set of distributed-training and GPU-systems
+  papers an RE must know to read RLHF work critically.
 
 **PRIME DIRECTIVE — in priority order:**
 
-1. **Content depth and accuracy above all else.** Every flashcard answer,
-   focus note, and paper question must be the kind of thing a senior RE at
-   OpenAI would say out loud, not a textbook summary. This is the only thing
-   that matters for Hanyu's goal.
-2. **Simplicity of UI.** This is a personal tool for one person. No
-   dashboards, no widgets, no streak counters, no "gamification". The
-   simpler and more direct the interface, the better. If a feature adds
-   complexity without directly helping Hanyu learn, remove it.
-3. **It works reliably.** Persistence, navigation, and core interactions
-   must be bug-free. That's it.
+1. **Core content is the whole product.** Curriculum focus notes and paper
+   summaries must read like a senior RE walking Hanyu through a book chapter:
+   opinionated, dense, citing the load-bearing equation or section, and ending
+   with one self-check question. Not a Wikipedia abstract. Not flamboyant
+   marketing prose. **Polish, then polish again.** Every time the worker runs,
+   the eval skill should be able to find one more rough item to deepen.
+2. **Tracks are completely separate.** Track is selected once, globally, at the
+   top of the app. Every page (curriculum, papers) shows only that track's
+   content. No per-tab Track filter, no mixed tabs, no cross-track surfaces.
+3. **Two pages, nothing more.** Curriculum and Papers. No Flashcards, no
+   Notes, no Dashboard, no Export/Import, no streaks, no widgets. If a
+   feature does not directly help Hanyu read better, it does not exist.
+4. **It works reliably.** Persistence, navigation, and core interactions
+   bug-free. `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` all
+   green at every commit boundary.
 
 ## User
 
@@ -24,7 +33,7 @@ to a Research Engineer role at a frontier lab. Primary track: Post-training
   (vLLM, KV cache, quantization). Zero production training experience.
 - Joining OpenAI Scaled Abuse team. Goal: transfer to post-training /
   safety research within 12–18 months.
-- Uses this app daily, alone, on desktop. No mobile needed.
+- Uses this app daily, alone, on desktop. Mobile must work but is secondary.
 
 ## Hard Acceptance Criteria
 
@@ -33,137 +42,146 @@ to a Research Engineer role at a frontier lab. Primary track: Post-training
 - Next.js 15, TypeScript, Tailwind, pnpm. App Router.
 - `pnpm install && pnpm build && pnpm start` succeed from clean clone.
 - `pnpm lint`, `pnpm typecheck`, `pnpm test` all pass, zero errors.
+- Dev / start / lighthouse all run on port **4747**.
 - No server-side secrets. Deployable to Vercel as-is.
 
 ### 2. Persistence
 
-- Progress, flashcard state, paper answers, notes persist in localStorage
-  with a versioned key (e.g. `research-desk:v1:*`).
-- Export/Import as JSON — two buttons somewhere accessible. That's all.
+Three localStorage slots only, all under `research-desk:v1:*`:
 
-### 3. UI — four pages, nothing more
+- `progress` — per-item curriculum state (pending / in-progress / done).
+- `paper-answers` — per-question textarea content for the paper questions.
+- `item-notes` — per-curriculum-row scratch annotations (the inline textarea).
 
-The entire app is four pages accessible from a simple top nav or sidebar.
-No sub-routes, no modals, no drawers unless genuinely necessary.
+No flashcards persistence. No notes-page persistence. No streak. No export
+bundle. The simplification is the point — there is no Export/Import button
+anywhere.
 
-**Page 1 — Curriculum**
-- List of all items grouped by phase. Each item shows: title, type, time
-  estimate, link, and the focus note inline (no click-to-expand needed —
-  the focus note is the point, show it).
-- Three states: pending / in-progress / done. Click to cycle. Persisted.
-- Filter by phase or track (RLHF / MLE-Fundamentals). That's all.
-- No sidesheets, no detail drawers. Everything visible on the page.
+### 3. Routing
 
-**Page 2 — Flashcards**
-- Show one card at a time. Front is visible. Click or Space to flip.
-- After flip: four buttons — Again / Hard / Good / Easy (SM-2 scheduler).
-  Keyboard shortcuts 1/2/3/4.
-- Show how many cards are due today. When queue is empty, say so.
-- No per-card stats drawer. No ease-factor display. Just the card.
+```
+/                         → redirects to /rlhf/curriculum
+/[track]/curriculum       → curriculum scoped to one track
+/[track]/papers           → paper grid scoped to one track
+/[track]/papers/[slug]    → paper reader (editorial summary + questions)
+```
 
-**Page 3 — Papers**
-- List of papers. Click one to open its page.
-- Each paper page: title, year, link, a 3–5 sentence "why this matters"
-  note, then the questions listed one by one.
-- Each question: the prompt, a textarea to write the answer, a reveal
-  button (enabled after 40 chars typed). Answers persist.
-- Back button to the list. That's it.
+`[track]` ∈ {`rlhf`, `mle`}. Unknown values 404.
 
-**Page 4 — Notes**
-- One big textarea. Markdown rendered below it as you type. Autosaves.
-- No multiple named pages. No tabs. Just one persistent scratchpad.
+The header (desktop sidebar; mobile top bar) contains a **TrackSwitcher**
+segmented control with two tabs: RLHF and MLE Fundamentals. Clicking a tab
+preserves the current sub-route (`/rlhf/papers` ↔ `/mle/papers`).
+
+The sidebar / bottom-nav has exactly two entries: **Curriculum** and **Papers**.
+No Flashcards entry. No Notes entry. No Dashboard.
 
 ### 4. Content — this is what actually matters
 
-#### Curriculum (≥ 55 items across 5 phases)
+#### Curriculum
 
-Every item must have:
-- A real URL (no placeholder domains).
+Every curriculum row is one section of an opinionated mentor book.
+
+- **`focusNote` (required, ≥ 200 characters):** 4–8 sentences. Written as if
+  Hanyu is sitting next to you and asked "what should I actually look for in
+  this?" Lead with one sentence on why this item exists in the path, then 2–4
+  sentences on the load-bearing idea (cite the section, equation, or
+  filename), then end with a one-sentence self-check ("Self-check: …").
+  No marketing prose, no abstract paraphrase, no "let's explore" framing.
+- A real URL on the host allow-list (no placeholder domains).
 - A time estimate.
-- A **focus note** of 2–4 sentences written in the voice of a senior RE
-  mentor — not a summary of the paper, but what to pay attention to and
-  why it matters for Hanyu specifically. This is the highest-value content
-  in the app. Spend the most effort here.
+- Prerequisite IDs that resolve to other items.
 
-Phase structure (same as before):
-- **Phase 1 — Foundations**: S&B Ch 1–13, policy gradient, KL divergence,
-  importance sampling, InstructGPT as first applied read, Spinning Up.
-- **Phase 2 — PPO & Reward Modeling**: PPO paper + Costa Huang's 37
-  details, Christiano 2017, Bradley-Terry RMs, calibration, length bias.
-  Project: RM on UltraFeedback + PPO on small LM.
+Phase shape (RLHF track):
+- **Phase 1 — Foundations**: Sutton & Barto Ch 1–6, 13; Spinning Up; KL,
+  importance sampling; InstructGPT as the first end-to-end read. Everything
+  the rest of the path presumes you have at your fingertips.
+- **Phase 2 — PPO & Reward Modeling**: PPO + Costa Huang's 37 details,
+  Christiano 2017, Bradley-Terry RMs, calibration, length bias. UltraFeedback.
 - **Phase 3 — DPO family & CAI**: DPO derivation, IPO, KTO, SimPO,
-  Constitutional AI, RLAIF. Project: DPO from scratch vs Phase 2 PPO.
-- **Phase 4 — Reasoning RL**: PRMs vs ORMs, DeepSeek-R1 + GRPO,
-  rule-based rewards. Project: GRPO on GSM8K.
-- **Phase 5 — End-to-end**: Tülu 3, synthetic data, reward hacking,
-  RLHF for safety. Capstone: SFT → RM → PPO/DPO on ~1B model, MT-Bench.
+  Constitutional AI, RLAIF, self-rewarding LMs.
+- **Phase 4 — Reasoning RL**: PRMs vs ORMs, DeepSeek-R1, GRPO, rule-based
+  rewards.
+- **Phase 5 — End-to-end**: Tülu 3, eval harnesses, reward hacking,
+  RLHF for safety.
 
-MLE-Fundamentals (tagged, mixed into phases):
-- Distributed training: FSDP, ZeRO, Megatron 3D parallelism.
-- GPU perf: GPU MODE, Triton, FlashAttention, Nsight profiling.
-- Eval: lm-evaluation-harness, AlpacaEval, MT-Bench, Arena-Hard.
+MLE Fundamentals track shares the phase numbering but only includes items
+that are MLE-specific (distributed training, GPU systems, eval infra). Track
+sizes:
+- RLHF: ≥ 40 items.
+- MLE Fundamentals: ≥ 8 items.
 
-URL allow-list test must pass (same domains as before).
+URL allow-list test must pass.
 
-#### Flashcards (≥ 36 cards)
+#### Papers
 
-Every card answer must be a full, confident paragraph — the kind of thing
-you'd say in a research interview without notes. Not bullet points, not
-one-liners. Required topics (same list as before — forward/reverse KL,
-PPO clip, DPO derivation, GRPO, ZeRO stages, FSDP vs DDP, FlashAttention,
-reward hacking, GAE, etc.).
+Every paper has a `summary` of 3–6 sentences in the same opinionated voice
+plus 5–7 questions of the form "walk through X" / "explain why Y" — never
+"what does X stand for". The reader page renders summary on top, questions
+below; each question has a textarea and a Reveal button gated to ≥ 40 chars.
 
-If any existing card answer is shorter than 4 sentences or reads like a
-Wikipedia intro, rewrite it to be longer and more precise.
+- RLHF papers: ≥ 8.
+- MLE Fundamentals papers: ≥ 2 (canonical: ZeRO, FlashAttention).
 
-#### Papers (≥ 10, same list as before)
+#### What "polish" means in practice
 
-Same 10 papers. Each with:
-- A "why this matters for you specifically" editorial note (3–5 sentences,
-  written to Hanyu, not generic).
-- 5–7 questions that test genuine understanding of the load-bearing
-  mechanics, not surface recall. Bad question: "What does DPO stand for?"
-  Good question: "Walk through where the partition function cancels in the
-  DPO derivation."
+Autopilot's worker should treat content as a multi-pass effort:
+
+1. **First pass** — every focus note hits the structural minimums above
+   (length, section citation, self-check sentence).
+2. **Second pass** — read each row aloud. If it sounds like a textbook
+   abstract, rewrite it in mentor voice. If the self-check is generic
+   ("understand X"), replace it with something testable ("state the policy
+   gradient theorem in one breath").
+3. **Third pass** — connect adjacent items. The Phase 2 PPO note should
+   reference the importance-sampling row from Phase 1 by name. The DPO note
+   should reference the closed-form-optimal-policy step from PPO.
+4. **Eval pass** — adversarially compare against the canonical source. If
+   the focus note misstates a detail (wrong equation number, wrong author
+   year, wrong phrase for a method), fix it and add a reference link in the
+   prose if it helps.
+
+The eval skill should keep returning polish blockers until every focus note
+and every paper summary survives an "is this what a senior RE would say?"
+read.
 
 ### 5. Visual design
 
-Keep the Solarized Light + Claude coral palette that's already in the app.
-Do not redesign from scratch — just simplify the layout.
+Solarized Light + coral accent. Serif body (current font). Mono accents.
+Sidebar 240–260px on desktop; collapses to a fixed bottom-nav on mobile.
+The TrackSwitcher is a segmented control (two tabs) immediately under the
+product name in the sidebar (or in the mobile top bar).
 
-The simplification mandate:
-- **Remove the Dashboard tab entirely.** Replace it with nothing. The
-  curriculum page IS the home page.
-- **Remove the streak widget, weekly progress bars, phase overview cards,
-  continue CTA** — all of it. Replace with: a single line of text at the
-  top of the curriculum page showing "X of 55 done" and "Y cards due today".
-  That is the entire dashboard.
-- **No sidesheets or drawers** anywhere. Everything inline.
-- **No modal overlays.** Links open in a new tab. Paper detail is just a
-  route, not a modal.
-- **Navigation**: four items in a minimal top bar or left sidebar. Active
-  page highlighted. Nothing else in the nav.
-
-Typography, colors, spacing — keep what's already there. Do not touch the
-palette, do not switch fonts. Only simplify structure.
+No sidesheets, no drawers, no modals. Links open in a new tab.
 
 ### 6. What to do if content and UI conflict
 
-Always prioritize content. If fixing a content gap means the UI is slightly
-less polished, that is the right tradeoff. The user will forgive an ugly
-button but will not forgive a wrong flashcard answer.
+Always prioritize content. The ugliest button that ships correct prose beats
+the prettiest layout that ships a vague abstract.
 
 ### 7. Tests
 
-- SM-2 scheduler unit tests.
 - URL allow-list test on curriculum data.
-- localStorage persistence smoke test.
-- That's enough. Do not add tests for UI components or visual things.
+- Curriculum invariants (length, focus-note length, prerequisite resolution,
+  per-phase counts within sane bounds).
+- Paper invariants (summary length, ≥ 5 questions per paper, every question
+  prompt is "walk through" / "explain why" form, never "what does X stand
+  for").
+- Storage envelope round-trip + graceful fallback on bad payloads.
+- Progress reducer (cycle pending → inprog → done → pending).
+- Markdown renderer XSS guard.
+- That's enough. No tests for visual styling.
 
 ## Definition of done
 
-Hanyu sits down, opens the app, reads the focus note on Sutton & Barto Ch 13,
-flips through 10 flashcard cards, reads the InstructGPT paper questions,
-writes his answers, and closes the laptop — and tomorrow he is meaningfully
-better prepared for a research engineer role than he was today. The UI never
-got in the way. The content was the whole point.
+Hanyu opens the app, picks RLHF, scrolls to Phase 2, reads the PPO row's
+focus note, and feels like a senior RE just whispered the secret of the
+clipped surrogate in his ear in five sentences. He clicks the Sutton & Barto
+Ch 13 row and gets the same feeling. He flips to MLE Fundamentals, opens
+ZeRO, reads three sentences and now understands why stage-3 is the only
+useful one in modern stacks. The UI never gets in the way. The content was
+the whole point.
+
+The judge passes only when every curriculum focus note and every paper
+summary clears the polish bar above. The eval skill should keep finding
+weakest-link items until none are left — that is what "polish, polish
+again" means in this repo.

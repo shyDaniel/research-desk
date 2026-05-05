@@ -3,12 +3,16 @@
 A personal, static, local-first learning OS for transitioning from applied
 MLE to frontier-lab post-training / RLHF research engineering.
 
-![Dashboard](docs/screenshot.png)
+> **README is stale post-refactor.** Flashcards, Notes, Dashboard, and the
+> Export/Import bundle have all been removed. The app is now two pages —
+> Curriculum and Papers — scoped per track via `/[track]/...` routes with
+> a global RLHF / MLE Fundamentals switcher. See `FINAL_GOAL.md` for the
+> current contract. Autopilot will rewrite this README during polish.
 
 - **Stack:** Next.js 15 (App Router), TypeScript strict, Tailwind v3, pnpm.
 - **Persistence:** `localStorage` with a versioned schema
-  (`research-desk:v1:*`), JSON export/import.
-- **Testing:** Vitest + React Testing Library (149 tests).
+  (`research-desk:v1:{progress,paper-answers,item-notes}`).
+- **Testing:** Vitest + React Testing Library.
 - **Hosting:** static — deployable to Vercel or any static host. No server
   secrets required. No LLM calls at runtime.
 

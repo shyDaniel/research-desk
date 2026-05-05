@@ -1,5 +1,15 @@
 # ARCHITECTURE.md — Research Desk
 
+> **STALE — do not trust without cross-referencing the source tree.**
+>
+> This document still describes the pre-track-split layout (Flashcards,
+> Notes, Dashboard, four tabs, multi-feature export bundle, SM-2 scheduler).
+> Those features have been removed. The current shape is two pages —
+> Curriculum and Papers — scoped per track via `/[track]/...` routes with a
+> global TrackSwitcher. See `FINAL_GOAL.md` for the new contract.
+> Autopilot should rewrite this file from scratch as part of the polish
+> work; until then prefer the source tree and FINAL_GOAL.md as ground truth.
+
 ## Shape of the app
 
 Static Next.js 15 App Router app. No server routes, no API, no database.
