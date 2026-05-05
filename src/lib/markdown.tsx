@@ -1,13 +1,12 @@
-// src/lib/markdown.ts
+// src/lib/markdown.tsx
 //
-// A small, safe, React-native markdown renderer for the /notes notebook.
+// A small, safe, React-native markdown renderer used by curriculum focus
+// notes and paper summaries.
 //
-// WHY NOT A LIBRARY: the notebook is a single-file preview pane. Pulling in
-// react-markdown + remark + rehype-sanitize would add tens of KB and a
-// non-trivial dependency tree for a feature whose markdown surface is
-// deliberately small (FINAL_GOAL.md says "free-form markdown notebook" — not
-// "MDX with syntax highlighting and math"). This module supports the subset
-// that actually covers real study notes:
+// WHY NOT A LIBRARY: react-markdown + remark + rehype-sanitize would add
+// tens of KB and a non-trivial dependency tree for a markdown surface that
+// is deliberately small. This module supports the subset that actually
+// covers the editorial prose those two surfaces ship:
 //
 //   - ATX headings  (# .. ###### at line start)
 //   - Fenced code   (```lang\n...\n```)

@@ -3,6 +3,34 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-045 · Rewrite markdown.tsx header (drop /notes + fake quote)
+
+Rewrote the file-header comment block in `src/lib/markdown.tsx`. Old
+header described the renderer as "for the /notes notebook" and quoted
+a non-existent `FINAL_GOAL.md says "free-form markdown notebook"` line
+to justify the no-library decision. The /notes route was removed in
+the S-036/S-040 era per FINAL_GOAL §3 ("Two pages, nothing more"), and
+that quote does not appear in FINAL_GOAL.md (verified:
+`grep -i 'free-form markdown' FINAL_GOAL.md` → 0 hits). Per
+ARCHITECTURE.md the renderer is consumed by curriculum focus notes
+and paper summaries; the new header says exactly that. Trimmed the
+WHY-NOT-A-LIBRARY paragraph to keep the dependency-cost framing
+without the fabricated quote. Also fixed the stale `src/lib/markdown.ts`
+filename in line 1 — the file is `.tsx`. Body of the renderer
+(parser, inline grammar, XSS note, supported-subset enumeration) is
+unchanged; those describe real, tested behavior.
+
+Verified: `grep -ni '/notes notebook\|free-form markdown notebook'
+src/lib/markdown.tsx` → 0 hits; `pnpm test` → 69/69 in 522 ms;
+`pnpm lint` → clean (max-warnings=0); `pnpm typecheck` → clean;
+`pnpm build` → green, all 11 paper detail pages + both curriculum
+routes prerender, bundle sizes unchanged (122 kB / 109 kB / 112 kB
+First Load JS).
+
+Browser MCPs (playwright/chrome-devtools) still unusable on this
+runner — same chrome-for-testing system-deps blocker as prior
+iterations; visual rubric carry-over.
+
 ## 2026-05-05 · S-042 · Drop dead `--due` / `--warn` CSS vars (flashcards leak)
 
 Deleted `--due: #CB4B16; /* overdue flashcards */` and the also-unused
