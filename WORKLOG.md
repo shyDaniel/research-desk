@@ -1006,3 +1006,19 @@ panel with the renamed slot). ARCHITECTURE.md updated to drop the
 "+ side-sheet" annotation from the curriculum route description;
 `app/globals.css` palette comment updated to drop the stale
 "side-sheets" surface mention.
+
+## S-036 — Stop shipping "flashcards, notes" meta tags to every page
+
+`app/layout.tsx` metadata.description / metadata.keywords still
+advertised flashcards and notes — features that PRIME DIRECTIVE #3
+deleted. Rewrote description to one factual sentence — "Two
+opinionated study tracks — RLHF post-training and MLE Fundamentals —
+each with a Curriculum page and a Papers page." — and rebuilt the
+keywords list to ("RLHF", "post-training", "MLE Fundamentals",
+"research engineering", "PPO", "DPO", "Curriculum", "Papers"). Also
+fixed the cousin leak in `src/data/types.ts:3` (file header dropped
+"flashcards"). Verified post-build:
+`curl -s http://localhost:4747/rlhf/curriculum | grep -iE
+'flashcard|notes,'` → 0 hits; the rendered description and keywords
+match the new strings. Tests 69/69, lint clean, typecheck clean,
+build green.

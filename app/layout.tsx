@@ -24,17 +24,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Research Desk",
   description:
-    "A personal learning OS for transitioning to frontier-lab research engineering. Curriculum, flashcards, papers, notes.",
+    "Two opinionated study tracks — RLHF post-training and MLE Fundamentals — each with a Curriculum page and a Papers page.",
   applicationName: "Research Desk",
   authors: [{ name: "Hanyu" }],
   keywords: [
     "RLHF",
     "post-training",
+    "MLE Fundamentals",
     "research engineering",
     "PPO",
     "DPO",
-    "flashcards",
-    "learning",
+    "Curriculum",
+    "Papers",
   ],
   robots: { index: true, follow: true },
 };

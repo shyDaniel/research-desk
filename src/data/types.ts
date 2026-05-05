@@ -1,6 +1,6 @@
 // src/data/types.ts
 //
-// Shared types for authored content (curriculum, flashcards, papers).
+// Shared types for authored content (curriculum, papers).
 // This module is pure types + constants — no runtime logic, no side effects.
 
 /** Phase in the RLHF-first learning arc. FINAL_GOAL.md §4 defines exactly 5. */
