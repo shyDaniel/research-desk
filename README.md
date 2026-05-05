@@ -1,50 +1,50 @@
 # Research Desk
 
-A personal, static, local-first learning OS for transitioning from applied
-MLE to frontier-lab post-training / RLHF research engineering.
-
-> **README is stale post-refactor.** Flashcards, Notes, Dashboard, and the
-> Export/Import bundle have all been removed. The app is now two pages —
-> Curriculum and Papers — scoped per track via `/[track]/...` routes with
-> a global RLHF / MLE Fundamentals switcher. See `FINAL_GOAL.md` for the
-> current contract. Autopilot will rewrite this README during polish.
+A personal, static, local-first study tool for the transition from applied
+MLE to frontier-lab post-training / RLHF research engineering. Two pages,
+two tracks, no accounts — opinionated mentor-voice notes on the papers and
+curriculum a research engineer needs at their fingertips.
 
 - **Stack:** Next.js 15 (App Router), TypeScript strict, Tailwind v3, pnpm.
-- **Persistence:** `localStorage` with a versioned schema
-  (`research-desk:v1:{progress,paper-answers,item-notes}`).
+- **Persistence:** `localStorage` only, three versioned slots under
+  `research-desk:v1:{progress,paper-answers,item-notes}`.
 - **Testing:** Vitest + React Testing Library.
 - **Hosting:** static — deployable to Vercel or any static host. No server
-  secrets required. No LLM calls at runtime.
+  secrets, no API routes, no LLM calls at runtime.
 
 ## What's in the box
 
-All five tabs are shipped and production-ready:
+Two pages, scoped per track via `/[track]/...` routes with a global
+RLHF / MLE Fundamentals switcher in the sidebar:
 
-- **Dashboard** — current-phase card, Continue jump to the most recently
-  touched item, next 3–5 items in the current phase, due flashcards CTA,
-  weekly streak indicator, per-phase progress bars, and the
-  Export / Import JSON controls.
-- **Curriculum** — 55 curated items across 5 phases (Foundations → PPO
-  & RM → DPO family + CAI → Reasoning RL → end-to-end) with real URLs
-  (arxiv / openai / huggingface / github / …), mentor-voice focus notes,
-  filters by phase / track / type / state, and a persisted side-sheet
-  with per-item notes.
-- **Flashcards** — 36 cards with SM-2 spaced-repetition scheduling
-  (Again / Hard / Good / Easy), 3D flip animation, `Space` to flip and
-  `1 2 3 4` to grade, ease / interval / reps drawer. Answers are
-  paragraph-length and technically precise (PPO surrogate, DPO
-  derivation, GRPO advantage, ZeRO stages, FlashAttention, …).
-- **Papers** — 11 canonical papers (InstructGPT, PPO, Christiano '17,
-  DPO, Constitutional AI, DeepSeek-R1 + GRPO, Let's Verify, ZeRO,
-  FlashAttention v1 + v2, RLAIF) with 3–5 sentence editorial summaries
-  and 5–7 pointed comprehension questions each. The "Reveal my answer"
-  button only enables after you type ≥ 40 characters — you grade
-  yourself against the paper.
-- **Notes** — multi-page markdown notebook (3 default pages: Notes,
-  Scratch, Weekly log), autosave with 250ms debounce, live preview
-  side-by-side on desktop and a Write / Preview pill switcher on
-  mobile. Markdown renderer is pure-React, scheme-filtered, no
-  `dangerouslySetInnerHTML`.
+- **Curriculum** — opinionated, mentor-voice focus notes on every row,
+  organized by phase (Foundations → PPO & Reward Modeling → DPO family
+  + CAI → Reasoning RL → End-to-end). Every item has a real URL, a
+  time estimate, prerequisites, and a `pending → in-progress → done`
+  cycle persisted to `localStorage`. Each row also has an inline
+  scratch textarea for personal annotations.
+  - **RLHF track:** 44 items across the path.
+  - **MLE Fundamentals track:** 11 items covering distributed training,
+    GPU systems, and eval infra (the small set of MLE papers an RE
+    must know to read RLHF work critically).
+- **Papers** — 11 canonical papers total (9 RLHF + 2 MLE
+  Fundamentals: ZeRO and FlashAttention) with 3–6 sentence editorial
+  summaries and 5–7 pointed comprehension questions each. Every
+  question is "walk through X" or "explain why Y" form. The reader's
+  per-question textarea autosaves; the **Reveal my answer** button
+  unlocks at ≥ 40 characters so you grade yourself against the paper.
+
+## Routing
+
+```
+/                         → redirects to /rlhf/curriculum
+/[track]/curriculum       → curriculum scoped to one track
+/[track]/papers           → paper grid scoped to one track
+/[track]/papers/[slug]    → paper reader (summary + questions)
+```
+
+`[track]` ∈ {`rlhf`, `mle`}. Unknown values 404. Switching tracks
+preserves the current sub-route (`/rlhf/papers` ↔ `/mle/papers`).
 
 ## Setup
 
@@ -65,14 +65,12 @@ pnpm start        # production server on :4747
 ```bash
 pnpm lint         # ESLint, zero warnings
 pnpm typecheck    # tsc --noEmit, strict
-pnpm test         # Vitest — 149 / 149
+pnpm test         # Vitest — 69 / 69
 ```
 
 ## Lighthouse
 
 A committed report lives at [`lighthouse.json`](./lighthouse.json).
-Scores on `/` (production build): performance ≥ 95, accessibility ≥ 95,
-best-practices 100, SEO 100.
 
 To regenerate:
 
@@ -83,13 +81,14 @@ pnpm lighthouse           # writes lighthouse.json at repo root
 ```
 
 The `lighthouse` script runs headless Chrome against
-`http://localhost:4747/` and emits the four category scores to
+`http://localhost:4747/` and emits the four category scores
+(performance, accessibility, best-practices, SEO) to
 `./lighthouse.json`.
 
 ## Deploy
 
-Research Desk is a fully static Next.js app — no server routes, no
-API, no database, no secrets. Any static host works.
+Research Desk is a static Next.js app — no server routes, no API, no
+database, no secrets. Any static host with a Next.js adapter works.
 
 ### Vercel (recommended)
 
@@ -101,38 +100,41 @@ pnpm dlx vercel --prod     # production release
 No environment variables, no project settings beyond framework
 auto-detection (Vercel picks up Next.js). Build command:
 `pnpm build`. Output directory: `.next` (Vercel's default for
-Next.js). The app is deployable from the repo root as-is.
+Next.js).
 
-### Netlify / Cloudflare Pages / any static host
+### Netlify / Cloudflare Pages
 
-1. Build: `pnpm build`.
-2. Serve the generated `.next` output using the Next.js runtime
-   provided by the host (Netlify's `@netlify/plugin-nextjs`,
-   Cloudflare Pages' Next.js adapter). The app has no server
-   actions, no API routes, and no runtime env vars, so every host's
-   Next.js adapter works out of the box.
-3. No custom headers required. `localStorage` is the only storage
-   surface.
-
-### Local tarball / file://
-
-`pnpm build && pnpm start` serves on `:4747` with HTTP 200 on every
-route. Because every route is prerendered (`○ (Static)` or `● (SSG)`
-in the build output), you can also point any static server
-(`python -m http.server`, `npx serve`) at `.next/server/app` after
-running `next export`-style flow if you need a truly file-server
-deploy.
+`pnpm build` then serve `.next` via the host's Next.js adapter
+(`@netlify/plugin-nextjs`, Cloudflare Pages' Next.js adapter). No
+custom headers required. `localStorage` is the only storage surface.
 
 ## What lives where
 
-- `app/` — App Router pages. `(tabs)` route group for the 5 tabs.
-- `src/data/` — content modules: `curriculum.ts`, `flashcards.ts`,
-  `papers.ts` (each with a structural Vitest suite).
-- `src/lib/` — pure logic: `sm2.ts` (scheduler), `progress.ts`
-  (reducer), `streak.ts` (weekly indicator), `storage.ts` (versioned
-  localStorage + Export / Import), `notes.ts`, `markdown.tsx`.
-- `src/state/` — React hooks that wrap the pure modules.
-- `src/components/` — presentational components.
+- `app/[track]/curriculum/page.tsx` — curriculum page for the active
+  track.
+- `app/[track]/papers/page.tsx` — paper grid for the active track.
+- `app/[track]/papers/[slug]/page.tsx` — paper reader (summary +
+  questions + per-question textarea).
+- `app/[track]/layout.tsx` and `app/[track]/_components/` — the
+  sidebar, TrackSwitcher segmented control, and shared chrome.
+- `src/data/curriculum.ts` — the 55 curriculum items (44 RLHF + 11
+  MLE Fundamentals) with focus notes, URLs, prerequisites.
+- `src/data/papers.ts` — the 11 papers (9 RLHF + 2 MLE Fundamentals)
+  with summaries and question prompts.
+- `src/data/types.ts` — `Track`, `CurriculumItem`, `Paper` shapes.
+- `src/lib/track.ts` — `parseTrackSlug` / `slugToTrack` / track
+  metadata used by every route.
+- `src/lib/progress.ts` — pure reducer for the per-item
+  `pending → in-progress → done → pending` cycle.
+- `src/lib/storage.ts` — versioned `localStorage` envelope with
+  graceful fallback on bad payloads. Three slots only:
+  `progress`, `paper-answers`, `item-notes`.
+- `src/lib/markdown.tsx` — pure-React markdown renderer with a
+  scheme allow-list (no `dangerouslySetInnerHTML`).
+- `src/data/__tests__/` and `src/lib/__tests__/` — the Vitest
+  invariants (URL allow-list, focus-note length, paper question
+  form, storage round-trip, progress reducer, markdown XSS guard,
+  track parsing).
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — data model, persistence,
   how to add content.
 - [`FINAL_GOAL.md`](./FINAL_GOAL.md) — hard acceptance criteria.
@@ -141,12 +143,12 @@ deploy.
 ## Aesthetic
 
 Solarized Light (`#FDF6E3` cream base, `#EEE8D5` parchment panels,
-`#586E75` slate text) with the Claude coral accent (`#D97757`) for
-CTAs, active states, and progress fills. Serif headings (Fraunces),
-sans body (Geist), mono identifiers (Geist Mono) in Solarized blue
-`#268BD2`. No dark mode, no purple, no pure white. Section titles use
-uppercase letter-spacing (`tracking-widest`) at 11–12px for
-wayfinding labels — a Solarized-UI convention.
+`#586E75` slate text) with a coral accent (`#D97757`) for CTAs,
+active states, and progress fills. Serif headings (Fraunces), sans
+body (Geist), mono identifiers (Geist Mono) in Solarized blue
+`#268BD2`. No dark mode, no purple, no pure white. Section labels
+use uppercase letter-spacing (`tracking-widest`) at 11–12px — a
+Solarized-UI convention.
 
 ## Non-goals
 

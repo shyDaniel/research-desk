@@ -3,6 +3,30 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-024 · Rewrite README to describe the real product
+
+Replaced the stale README that still led with "README is stale
+post-refactor" and marketed the deleted Dashboard / Flashcards (SM-2)
+/ multi-page Notes / Export-Import surfaces. The new README describes
+what actually ships: two pages (Curriculum, Papers), two tracks
+(RLHF n=44, MLE Fundamentals n=11), routes
+`/[track]/{curriculum,papers,papers/[slug]}` with `/` redirecting to
+`/rlhf/curriculum`, three localStorage v1 slots
+(`progress`, `paper-answers`, `item-notes`), port 4747, real test
+count 69, real paper split (9 RLHF + 2 MLE = 11), Solarized-Light +
+coral aesthetic, and the "no auth, no backend, no LLM at runtime"
+non-goals. The "What lives where" section now points at the real
+file layout (`app/[track]/...`, `src/lib/track.ts`,
+`src/lib/progress.ts`, `src/lib/storage.ts`, `src/lib/markdown.tsx`,
+`src/data/{curriculum,papers,types}.ts` and the `__tests__` dirs)
+instead of the deleted `src/lib/sm2.ts` / `src/lib/streak.ts` /
+`(tabs)` route group.
+
+Acceptance grep clean:
+`grep -iE 'flashcard|sm-?2|notes tab|dashboard|export|import|five tabs|five phases|149|stale post-refactor' README.md`
+returns 0. `pnpm lint` clean, `pnpm typecheck` clean, `pnpm test`
+69/69 green.
+
 ## 2026-05-05 · S-017 · Stop lowercasing acronyms (RL, GPU) in curriculum H1
 
 `app/[track]/curriculum/page.tsx:37` was rendering
