@@ -190,7 +190,7 @@ export const CURRICULUM: ReadonlyArray<CurriculumItem> = [
     url: "https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/",
     timeEstimate: "~3h",
     focusNote:
-      "MCP 'generic-external-blog' not needed — this is mirrored on iclr-blog-track. If offline, read the equivalent on the author's GitHub (huggingface/blog or the original repo). The 'advantage normalization per mini-batch' and 'value-loss clip' details are the ones that will silently halve your training reward if you miss them. Self-check: list five of the 37 details from memory, including the two that silently halve reward (advantage normalization scope and value-loss clipping).",
+      "The PPO paper tells you the algorithm; this post tells you the details that decide whether your run trains at all. Read it after p2-ppo-paper, not before — the 37 details are calibrations against a baseline you have to already understand. Anchor on the two that silently halve reward and that every RLHF codebase ships: advantage normalization scoped per mini-batch (not per rollout, not per full batch) and value-loss clipping with the same ε as the policy. The orthogonal-init detail and the gradient-clip-by-global-norm one are the next two that bite. Self-check: list five of the 37 details from memory, including the two that silently halve reward (advantage normalization scope and value-loss clipping), and explain in one sentence why per-mini-batch normalization is the right scope.",
     prerequisites: ["p2-ppo-paper"],
   },
   {
@@ -286,7 +286,7 @@ export const CURRICULUM: ReadonlyArray<CurriculumItem> = [
     url: "https://arxiv.org/abs/2401.12086",
     timeEstimate: "~1h",
     focusNote:
-      "Useful exemplar of how to check RM calibration (ECE on held-out preferences, not just top-1 accuracy). Skim for the calibration protocol; the main result is less important than the evaluation recipe. Self-check: define ECE for a binary preference RM in one line, and explain why top-1 accuracy alone hides miscalibration that bites you under PPO.",
+      "West-of-N is the synthetic-preference-data trick that frontier RM stacks now ship: for each prompt, take an existing RM, rate N policy samples, then mint a new preference pair from (best, worst) of that pool. The headline result is that augmenting human preferences with West-of-N synthetic pairs lifts RM accuracy roughly as much as adding the same volume of fresh human labels — i.e. it is a self-improvement loop for the RM itself, not a labeling shortcut. Read the §3 algorithm and the §4 ablation that varies N and the seed-RM quality; that ablation is the one that tells you when synthetic data starts hurting. Self-check: describe the West-of-N pair-construction step in one sentence, and explain in another why the procedure degrades when the seed reward model is weak.",
     prerequisites: ["p2-ultrafeedback"],
   },
   {

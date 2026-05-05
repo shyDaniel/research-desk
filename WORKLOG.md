@@ -3,6 +3,59 @@
 Append-only log of autopilot iterations. Each entry: date, subtask id,
 what changed, what was actually observed when exercising the product.
 
+## 2026-05-05 · S-051 · Polish two weakest curriculum focus notes (P2)
+
+Two Phase-2 RLHF rows had focus notes that flunked FINAL_GOAL §4
+"polish, then polish again". Fixed both in `src/data/curriculum.ts`:
+
+1. `p2-costa-huang-37-details` (Costa Huang's 37 PPO Implementation
+   Details) led with developer-tooling meta-chatter — *"MCP
+   'generic-external-blog' not needed — this is mirrored on
+   iclr-blog-track. If offline, read the equivalent on the author's
+   GitHub …"* — i.e. notes-to-the-MCP-runtime that have no business
+   in mentor-voice prose Hanyu would read while studying. Rewrote in
+   mentor voice: lead with why the post exists in the path ("PPO
+   paper tells you the algorithm; this post tells you the details
+   that decide whether your run trains at all"), explicitly chain
+   back to the prereq `p2-ppo-paper` per FINAL_GOAL §4 third pass
+   (connect adjacent items), keep the load-bearing two details
+   (advantage-norm scope + value-loss clip), upgrade the self-check
+   from "list five details" to "list five AND explain why
+   per-mini-batch normalization is the right scope".
+2. `p2-rm-calibration` (West-of-N) was flatly wrong about the
+   paper. Old note claimed it was "useful exemplar of how to check
+   RM calibration (ECE on held-out preferences)" — but West-of-N
+   is not a calibration paper at all; it is a synthetic-preference-
+   data method (rate N policy samples with a seed RM, mint a new
+   pair from best/worst, augment training). Verified against the
+   arXiv abstract via WebFetch. Rewrote the note to describe what
+   the paper actually contributes: the §3 algorithm, the
+   "synthetic ≈ same volume of fresh human labels" headline, the
+   §4 ablation where synthetic data starts hurting when the seed
+   RM is weak. Self-check rewritten to test the actual mechanism.
+
+Both new notes still pass the structural invariants (≥ 200 chars,
+end in `Self-check: …` with ≥ 25-char question, no placeholder
+tokens). Item id `p2-rm-calibration` left stable to preserve any
+persisted progress under that key.
+
+Verification: `pnpm test` → 69/69 in 578 ms; `pnpm lint
+--max-warnings=0` → clean; `pnpm typecheck` → clean; `pnpm build`
+→ green, both curriculum routes + 11 paper detail pages prerender
+at 122/109/112 kB First Load JS (byte-identical to S-045).
+`grep -n "MCP 'generic-external-blog'" src/data/curriculum.ts` → 0
+hits; `grep -n "ECE on held-out" src/data/curriculum.ts` → 0 hits.
+Booted `pnpm start` on :4747 (after killing a stale prior-iter
+server squatting the port) and `curl /rlhf/curriculum` (165 826
+bytes): the new "PPO paper tells you the algorithm" + "West-of-N
+is the synthetic" prose render in the HTML; the old MCP-meta and
+ECE-calibration strings return 0 hits in rendered HTML.
+
+Browser MCPs (playwright/chrome-devtools) still unusable on this
+runner — chromium-for-testing system deps missing, sudo
+unavailable; visual screenshot+Read loop carried over from prior
+iterations as the only outstanding non-content blocker.
+
 ## 2026-05-05 · S-045 · Rewrite markdown.tsx header (drop /notes + fake quote)
 
 Rewrote the file-header comment block in `src/lib/markdown.tsx`. Old
